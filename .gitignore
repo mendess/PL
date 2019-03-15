@@ -50,3 +50,7 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+mkhtml
+lex_out.c
+folha8.OUT.txt
