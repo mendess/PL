@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 
-typedef struct _pub {
+struct Pub {
     char* id;
     char* title;
     char* author_date;
@@ -12,9 +12,9 @@ typedef struct _pub {
     size_t tags_capacity;
     size_t tags_num;
     char* category;
-} PubHeader;
+};
 
-PubHeader header;
+static struct Pub header;
 
 static char* str_dup(const char* s) {
     char * new_s = malloc(sizeof(char) * (strlen(s) + 1));

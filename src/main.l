@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "pub.h"
+#include "tags.h"
 int has_category = 0;
 FILE* target = NULL;
 #define END_PUB (BEGIN INITIAL, free_header())
@@ -16,7 +17,7 @@ ANS  [0-9A-Za-zÀ-ÖØ-öø-ÿ\- ]
 %x TEXT
 %%
 "<pub>"\n*                      { BEGIN HEADER; init_header(); has_category = 0; target = NULL; }
-<HEADER>"tag:{"[^}]+"}"         { yytext[yyleng - 1] = '\0'; tags_append(yytext + 5); }
+<HEADER>"tag:{"[^}]+"}"         { yytext[yyleng - 1] = '\0'; tags_append(yytext + 5); tags_add(yytext + 5); }
 <HEADER>"#ID:"{SEP}*\{post-{D}+ {
                                     char* id = yytext;
                                     while(*(id++) != '{'); // skip to 'post'
@@ -52,8 +53,10 @@ ANS  [0-9A-Za-zÀ-ÖØ-öø-ÿ\- ]
 
 int main() {
     /* printf("<html><body>\n"); */
+    tags_init();
     yylex();
     yylex_destroy();
+    tags_flush();
     /* printf("</body></html>\n"); */
     return 0;
 }
