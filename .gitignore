@@ -53,4 +53,5 @@ dkms.conf
 
 mkhtml
 lex_out.c
-folha8.OUT.txt
+noticias
+input
