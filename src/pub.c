@@ -1,8 +1,8 @@
 #include "pub.h"
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 struct Pub {
     char* id;
@@ -16,13 +16,15 @@ struct Pub {
 
 static struct Pub header;
 
-static char* str_dup(const char* s) {
-    char * new_s = malloc(sizeof(char) * (strlen(s) + 1));
+static char* str_dup(const char* s)
+{
+    char* new_s = malloc(sizeof(char) * (strlen(s) + 1));
     strcpy(new_s, s);
     return new_s;
 }
 
-void pub_tags_append(char* tag) {
+void pub_tags_append(char* tag)
+{
     if (header.tags_capacity == header.tags_num) {
         header.tags_capacity *= 2;
         header.tags = realloc(header.tags, sizeof(char*) * header.tags_capacity);
@@ -30,13 +32,17 @@ void pub_tags_append(char* tag) {
     header.tags[header.tags_num++] = str_dup(tag);
 }
 
-void pub_id_add(char* id) {
+void pub_id_add(char* id)
+{
     header.id = str_dup(id);
 }
 
-void pub_title_append(char* title){
-    if(strlen(title) == 0) { return; }
-    if(header.title == NULL) {
+void pub_title_append(char* title)
+{
+    if (strlen(title) == 0) {
+        return;
+    }
+    if (header.title == NULL) {
         header.title = malloc(sizeof(char) * strlen(title) + 1);
         header.title[0] = '\0';
     } else {
@@ -45,15 +51,18 @@ void pub_title_append(char* title){
     strcat(header.title, title);
 }
 
-void pub_author_date_add(char* author_date){
+void pub_author_date_add(char* author_date)
+{
     header.author_date = str_dup(author_date);
 }
 
-void pub_category_add(char* category) {
+void pub_category_add(char* category)
+{
     header.category = str_dup(category);
 }
 
-void pub_init() {
+void pub_init()
+{
     header.id = NULL;
     header.title = NULL;
     header.author_date = NULL;
@@ -63,11 +72,12 @@ void pub_init() {
     header.category = NULL;
 }
 
-void pub_clear() {
+void pub_clear()
+{
     free(header.id);
     free(header.title);
     free(header.author_date);
-    for(size_t i = 0; i < header.tags_num; i++) {
+    for (size_t i = 0; i < header.tags_num; i++) {
         free(header.tags[i]);
     }
     free(header.tags);
@@ -78,51 +88,58 @@ void pub_clear() {
 #define END_TAG_LEN (strlen("</tag> ") + 1)
 #define TAG_LEN(s) (BEGIN_TAG_LEN + strlen(s) + END_TAG_LEN)
 
-char* tags_to_string() {
+char* tags_to_string()
+{
     char* tags = NULL;
     size_t tags_len = 0;
-    for(size_t i = 0; i < header.tags_num; i++) {
+    for (size_t i = 0; i < header.tags_num; i++) {
         tags_len += sizeof(char) * TAG_LEN(header.tags[i]);
         tags = realloc(tags, tags_len);
         tags[tags_len - sizeof(char) * TAG_LEN(header.tags[i])] = '\0';
         strcat(strcat(strcat(tags, "<tag>"), header.tags[i]), "</tag> ");
     }
-    if(tags) {
+    if (tags) {
         size_t i;
-        for(i = strlen(tags) - 1; tags[i] != '>'; --i);
-        tags[i+1] = '\0';
+        for (i = strlen(tags) - 1; tags[i] != '>'; --i)
+            ;
+        tags[i + 1] = '\0';
     }
     return tags;
 }
 
 #define MAYBE(s) (s ? s : "")
 
-FILE* pub_header_print() {
-    if(!header.id) { return NULL; }
+FILE* pub_header_print()
+{
+    if (!header.id) {
+        return NULL;
+    }
     char* tags = tags_to_string();
     char filename[1024];
     sprintf(filename, "noticias/%s.html", header.id);
     FILE* target = fopen(filename, "w");
     fprintf(target,
-            "<pub id=\"%s\">\n"
-            "  <title>%s</title>\n"
-            "  <author_date>%s</author_date>\n",
-            header.id,
-            MAYBE(header.title),
-            MAYBE(header.author_date)
-           );
-    if(tags){
-        fprintf(target,"  <tags>\n""    %s\n""  </tags>\n", tags);
+        "<pub id=\"%s\">\n"
+        "  <title>%s</title>\n"
+        "  <author_date>%s</author_date>\n",
+        header.id,
+        MAYBE(header.title),
+        MAYBE(header.author_date));
+    if (tags) {
+        fprintf(target, "  <tags>\n"
+                        "    %s\n"
+                        "  </tags>\n",
+            tags);
     }
     fprintf(target,
-            "  <category>%s</category>\n"
-            "  <text>\n",
-            MAYBE(header.category)
-           );
+        "  <category>%s</category>\n"
+        "  <text>\n",
+        MAYBE(header.category));
     free(tags);
     return target;
 }
 
-const char* pub_id() {
+const char* pub_id()
+{
     return header.id;
 }
