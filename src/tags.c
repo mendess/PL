@@ -5,21 +5,14 @@
 
 static GHashTable* tags = NULL;
 
-static int vstrcmp(const void* a, const void* b)
-{
-    return strcmp((char*)a, (char*)b);
-}
-
 void tags_init()
 {
-    tags = g_hash_table_new_full(g_str_hash, vstrcmp, free, NULL);
+    tags = g_hash_table_new_full(g_str_hash, g_str_equal, free, NULL);
 }
 
 void tags_add(char* tag)
 {
-    if (!g_hash_table_lookup(tags, tag)) {
-        g_hash_table_add(tags, g_strdup(tag));
-    }
+    g_hash_table_add(tags, g_strdup(tag));
 }
 
 void tags_flush()

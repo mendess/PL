@@ -74,7 +74,7 @@ void pub_clear() {
     free(header.category);
 }
 
-#define BEGIN_TAG_LEN (strlen("<tag>") + 1)
+#define BEGIN_TAG_LEN (strlen("<tag>"))
 #define END_TAG_LEN (strlen("</tag> ") + 1)
 #define TAG_LEN(s) (BEGIN_TAG_LEN + strlen(s) + END_TAG_LEN)
 
@@ -86,6 +86,11 @@ char* tags_to_string() {
         tags = realloc(tags, tags_len);
         tags[tags_len - sizeof(char) * TAG_LEN(header.tags[i])] = '\0';
         strcat(strcat(strcat(tags, "<tag>"), header.tags[i]), "</tag> ");
+    }
+    if(tags) {
+        size_t i;
+        for(i = strlen(tags) - 1; tags[i] != '>'; --i);
+        tags[i+1] = '\0';
     }
     return tags;
 }
@@ -101,18 +106,19 @@ FILE* pub_header_print() {
     fprintf(target,
             "<pub id=\"%s\">\n"
             "  <title>%s</title>\n"
-            "  <author_date>%s</author_date>\n"
-            "  <tags>\n"
-            "    %s\n"
-            "  </tags>\n"
-            "  <category>%s</category>\n"
-            "  <text>\n",
+            "  <author_date>%s</author_date>\n",
             header.id,
             MAYBE(header.title),
-            MAYBE(header.author_date),
-            MAYBE(tags),
+            MAYBE(header.author_date)
+           );
+    if(tags){
+        fprintf(target,"  <tags>\n""    %s\n""  </tags>\n", tags);
+    }
+    fprintf(target,
+            "  <category>%s</category>\n"
+            "  <text>\n",
             MAYBE(header.category)
-          );
+           );
     free(tags);
     return target;
 }
