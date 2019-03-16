@@ -3,22 +3,22 @@
 
 #include <stdio.h>
 
-void init_header();
+void pub_init();
 
-void tags_append(char*);
+void pub_tags_append(char*);
 
-void id_add(char*);
+void pub_id_add(char*);
 
-void title_add(char*);
+void pub_title_append(char*);
 
-void author_date_add(char*);
+void pub_author_date_add(char*);
 
-void category_add(char*);
+void pub_category_add(char*);
 
-FILE* header_print();
+FILE* pub_header_print();
 
-void free_header();
+void pub_clear();
 
-char* header_id();
+const char* pub_id();
 
 #endif // PUB_H

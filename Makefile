@@ -62,5 +62,5 @@ clean:
 	rm -rf $(T_RELEASE)
 	rm -rf $(T_DEBUG)
 	rm -rf $(T_LEX)
-	rm -f noticias/*.hmtl
+	rm -f noticias/*
 	rm -f $(EXE)

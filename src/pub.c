@@ -22,7 +22,7 @@ static char* str_dup(const char* s) {
     return new_s;
 }
 
-void tags_append(char* tag) {
+void pub_tags_append(char* tag) {
     if (header.tags_capacity == header.tags_num) {
         header.tags_capacity *= 2;
         header.tags = realloc(header.tags, sizeof(char*) * header.tags_capacity);
@@ -30,11 +30,11 @@ void tags_append(char* tag) {
     header.tags[header.tags_num++] = str_dup(tag);
 }
 
-void id_add(char* id) {
+void pub_id_add(char* id) {
     header.id = str_dup(id);
 }
 
-void title_add(char* title){
+void pub_title_append(char* title){
     if(strlen(title) == 0) { return; }
     if(header.title == NULL) {
         header.title = malloc(sizeof(char) * strlen(title) + 1);
@@ -45,15 +45,15 @@ void title_add(char* title){
     strcat(header.title, title);
 }
 
-void author_date_add(char* author_date){
+void pub_author_date_add(char* author_date){
     header.author_date = str_dup(author_date);
 }
 
-void category_add(char* category) {
+void pub_category_add(char* category) {
     header.category = str_dup(category);
 }
 
-void init_header() {
+void pub_init() {
     header.id = NULL;
     header.title = NULL;
     header.author_date = NULL;
@@ -63,7 +63,7 @@ void init_header() {
     header.category = NULL;
 }
 
-void free_header() {
+void pub_clear() {
     free(header.id);
     free(header.title);
     free(header.author_date);
@@ -92,7 +92,7 @@ char* tags_to_string() {
 
 #define MAYBE(s) (s ? s : "")
 
-FILE* header_print() {
+FILE* pub_header_print() {
     if(!header.id) { return NULL; }
     char* tags = tags_to_string();
     char filename[1024];
@@ -117,6 +117,6 @@ FILE* header_print() {
     return target;
 }
 
-char* header_id() {
+const char* pub_id() {
     return header.id;
 }
