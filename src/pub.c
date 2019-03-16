@@ -35,7 +35,14 @@ void id_add(char* id) {
 }
 
 void title_add(char* title){
-    header.title = str_dup(title);
+    if(strlen(title) == 0) { return; }
+    if(header.title == NULL) {
+        header.title = malloc(sizeof(char) * strlen(title) + 1);
+        header.title[0] = '\0';
+    } else {
+        header.title = realloc(header.title, sizeof(char) * (strlen(header.title) + strlen(title)) + 1);
+    }
+    strcat(header.title, title);
 }
 
 void author_date_add(char* author_date){
@@ -78,14 +85,15 @@ char* tags_to_string() {
         tags_len += sizeof(char) * TAG_LEN(header.tags[i]);
         tags = realloc(tags, tags_len);
         tags[tags_len - sizeof(char) * TAG_LEN(header.tags[i])] = '\0';
-        strcat(tags, "<tag>");
-        strcat(tags, header.tags[i]);
-        strcat(tags, "</tag> ");
+        strcat(strcat(strcat(tags, "<tag>"), header.tags[i]), "</tag> ");
     }
     return tags;
 }
 
+#define MAYBE(s) (s ? s : "")
+
 FILE* header_print() {
+    if(!header.id) { return NULL; }
     char* tags = tags_to_string();
     char filename[1024];
     sprintf(filename, "noticias/%s.html", header.id);
@@ -100,11 +108,15 @@ FILE* header_print() {
             "  <category>%s</category>\n"
             "  <text>\n",
             header.id,
-            header.title,
-            header.author_date,
-            tags,
-            header.category
+            MAYBE(header.title),
+            MAYBE(header.author_date),
+            MAYBE(tags),
+            MAYBE(header.category)
           );
     free(tags);
     return target;
+}
+
+char* header_id() {
+    return header.id;
 }

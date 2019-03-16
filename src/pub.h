@@ -19,4 +19,6 @@ FILE* header_print();
 
 void free_header();
 
+char* header_id();
+
 #endif // PUB_H
