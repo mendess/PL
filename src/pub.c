@@ -1,4 +1,6 @@
 #include "pub.h"
+#include "tags.h"
+#include "util.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,21 +25,21 @@ static char* str_dup(const char* s)
     return new_s;
 }
 
-void pub_tags_append(char* tag)
+void pub_tags_append(const char* tag)
 {
     if (header.tags_capacity == header.tags_num) {
         header.tags_capacity *= 2;
         header.tags = realloc(header.tags, sizeof(char*) * header.tags_capacity);
     }
-    header.tags[header.tags_num++] = str_dup(tag);
+    header.tags[header.tags_num++] = str_replace(str_dup(tag), '\n', ' ');
 }
 
-void pub_id_add(char* id)
+void pub_id_add(const char* id)
 {
     header.id = str_dup(id);
 }
 
-void pub_title_append(char* title)
+void pub_title_append(const char* title)
 {
     if (strlen(title) == 0) {
         return;
@@ -51,12 +53,12 @@ void pub_title_append(char* title)
     strcat(header.title, title);
 }
 
-void pub_author_date_add(char* author_date)
+void pub_author_date_add(const char* author_date)
 {
     header.author_date = str_dup(author_date);
 }
 
-void pub_category_add(char* category)
+void pub_category_add(const char* category)
 {
     header.category = str_dup(category);
 }
@@ -97,6 +99,7 @@ char* tags_to_string()
         tags = realloc(tags, tags_len);
         tags[tags_len - sizeof(char) * TAG_LEN(header.tags[i])] = '\0';
         strcat(strcat(strcat(tags, "<tag>"), header.tags[i]), "</tag> ");
+        tags_add(header.tags[i]);
     }
     if (tags) {
         size_t i;
@@ -126,9 +129,10 @@ FILE* pub_header_print()
         MAYBE(header.title),
         MAYBE(header.author_date));
     if (tags) {
-        fprintf(target, "  <tags>\n"
-                        "    %s\n"
-                        "  </tags>\n",
+        fprintf(target,
+            "  <tags>\n"
+            "    %s\n"
+            "  </tags>\n",
             tags);
     }
     fprintf(target,

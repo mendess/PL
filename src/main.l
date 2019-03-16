@@ -17,7 +17,7 @@ ANS  [0-9A-Za-zÀ-ÖØ-öø-ÿ\- ]
 %x TEXT
 %%
 "<pub>"\n*                      { BEGIN HEADER; pub_init(); has_category = 0; target = NULL; }
-<HEADER>"tag:{"[^}]+"}"         { yytext[yyleng - 1] = '\0'; pub_tags_append(yytext + 5); tags_add(yytext + 5); }
+<HEADER>"tag:{"[^}]+"}"         { yytext[yyleng - 1] = '\0'; pub_tags_append(yytext + 5); }
 <HEADER>"#ID:"{SEP}*\{post-{D}+ {
                                     char* id = yytext;
                                     while(*(id++) != '{'); // skip to 'post'
