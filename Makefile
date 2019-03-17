@@ -24,7 +24,7 @@ OBJECTS=$(patsubst $(SOURCES_DIR)/%.c,$(T_RELEASE)/%.o,$(SOURCES))
 DEBUG_OBJECTS=$(patsubst $(SOURCES_DIR)/%.c,$(T_DEBUG)/%.o,$(SOURCES))
 EXE=mkhtml
 
-default: release_dir lex $(OBJECTS)
+release: release_dir lex $(OBJECTS)
 	$(CYAN)
 	cc $(OPTIMISE) $(CFLAGS) $(OBJECTS) $(LEX_OBJ) -I$(HEADERS) -o $(T_RELEASE)/$(EXE)
 	$(RESET)
@@ -57,6 +57,13 @@ release_dir:
 
 debug_dir:
 	@mkdir -p $(T_DEBUG)
+
+grind: debug
+	valgrind --leak-check=full --show-leak-kinds=all target/debug/mkhtml
+
+bench: release
+	@mkdir -p benchmarks
+	./run-benchmarks.sh
 
 clean:
 	rm -rf $(T_RELEASE)
