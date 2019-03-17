@@ -36,7 +36,7 @@ $(OBJECTS): $(T_RELEASE)/%.o : $(SOURCES_DIR)/%.c
 
 debug: debug_dir lex $(DEBUG_OBJECTS)
 	$(CYAN)
-	cc $(DEBUG) $(CFLAGS) $(OBJECTS) $(LEX_OBJ) -I$(HEADERS) -o $(T_DEBUG)/$(EXE)
+	cc $(DEBUG) $(CFLAGS) $(DEBUG_OBJECTS) $(LEX_OBJ) -I$(HEADERS) -o $(T_DEBUG)/$(EXE)
 	$(RESET)
 
 $(DEBUG_OBJECTS): $(T_DEBUG)/%.o : $(SOURCES_DIR)/%.c
