@@ -94,12 +94,13 @@ char* tags_to_string()
 {
     char* tags = NULL;
     size_t tags_len = 0;
+    const int post_id = atoi(header.id + 5);
     for (size_t i = 0; i < header.tags_num; i++) {
         tags_len += sizeof(char) * TAG_LEN(header.tags[i]);
         tags = realloc(tags, tags_len);
         tags[tags_len - sizeof(char) * TAG_LEN(header.tags[i])] = '\0';
         strcat(strcat(strcat(tags, "<tag>"), header.tags[i]), "</tag> ");
-        tags_add(header.tags[i]);
+        tags_add(post_id, header.tags[i]);
     }
     if (tags) {
         size_t i;

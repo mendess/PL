@@ -3,7 +3,7 @@
 
 void tags_init();
 
-void tags_add(char*);
+void tags_add(int post_id, char*);
 
 void tags_flush();
 
