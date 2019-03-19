@@ -5,6 +5,7 @@
 #include <string.h>
 #include "pub.h"
 #include "tags.h"
+#include "index.h"
 int has_category = 0;
 FILE* target = NULL;
 #define END_PUB (BEGIN INITIAL, pub_clear())
@@ -52,11 +53,11 @@ ANS  [0-9A-Za-zÀ-ÖØ-öø-ÿ\- ]
 %%
 
 int main() {
-    /* printf("<html><body>\n"); */
     tags_init();
+    index_init();
     yylex();
     yylex_destroy();
+    index_flush();
     tags_flush();
-    /* printf("</body></html>\n"); */
     return 0;
 }

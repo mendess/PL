@@ -1,5 +1,6 @@
 #include "pub.h"
 #include "tags.h"
+#include "index.h"
 #include "util.h"
 #include <stddef.h>
 #include <stdio.h>
@@ -108,6 +109,7 @@ char* tags_to_string()
             ;
         tags[i + 1] = '\0';
     }
+    index_add_entry(post_id);
     return tags;
 }
 
