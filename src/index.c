@@ -48,4 +48,5 @@ void index_flush()
             "</html>"
             );
     fclose(index_file);
+    g_tree_destroy(index);
 }
