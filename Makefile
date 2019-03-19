@@ -34,7 +34,7 @@ $(OBJECTS): $(T_RELEASE)/%.o : $(SOURCES_DIR)/%.c
 	cc $(OPTIMISE) $(CFLAGS) -I$(HEADERS) -c $< -o $@
 	$(RESET)
 
-debug: debug_dir lex $(DEBUG_OBJECTS)
+debug: debug_dir lex_debug $(DEBUG_OBJECTS)
 	$(CYAN)
 	cc $(DEBUG) $(CFLAGS) $(DEBUG_OBJECTS) $(LEX_OBJ) -I$(HEADERS) -o $(T_DEBUG)/$(EXE)
 	$(RESET)
@@ -50,6 +50,14 @@ lex: $(SOURCES_DIR)/main.l
 	flex -o $(LEX_OUT) $(SOURCES_DIR)/main.l
 	$(GREEN)
 	cc $(OPTIMISE) -I$(HEADERS) -c $(LEX_OUT) -o $(LEX_OBJ)
+	$(RESET)
+
+lex_debug: $(SOURCES_DIR)/main.l
+	@mkdir -p $(T_LEX)
+	$(PURPLE)
+	flex -o $(LEX_OUT) $(SOURCES_DIR)/main.l
+	$(GREEN)
+	cc $(DEBUG) -I$(HEADERS) -c $(LEX_OUT) -o $(LEX_OBJ)
 	$(RESET)
 
 release_dir:

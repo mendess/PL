@@ -1,6 +1,6 @@
 #include "pub.h"
-#include "tags.h"
 #include "index.h"
+#include "tags.h"
 #include "util.h"
 #include <stddef.h>
 #include <stdio.h>
@@ -109,7 +109,7 @@ char* tags_to_string()
             ;
         tags[i + 1] = '\0';
     }
-    index_add_entry(post_id);
+    index_add_entry(post_id, header.title);
     return tags;
 }
 
@@ -125,6 +125,7 @@ FILE* pub_header_print()
     sprintf(filename, "noticias/%s.html", header.id);
     FILE* target = fopen(filename, "w");
     fprintf(target,
+        "<html><head><meta charset='UTF-8' /></head>\n"
         "<pub id=\"%s\">\n"
         "  <title>%s</title>\n"
         "  <author_date>%s</author_date>\n",
