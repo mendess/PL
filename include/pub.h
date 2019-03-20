@@ -15,10 +15,14 @@ void pub_author_date_add(const char*);
 
 void pub_category_add(const char*);
 
-FILE* pub_header_print();
+int pub_header_print();
+
+void pub_append_text(const char*);
 
 void pub_clear();
 
-const char* pub_id();
+void pub_footer_print();
+
+int pub_ok();
 
 #endif // PUB_H

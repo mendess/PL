@@ -15,6 +15,7 @@ struct Pub {
     size_t tags_capacity;
     size_t tags_num;
     char* category;
+    FILE* target;
 };
 
 static struct Pub header;
@@ -73,6 +74,7 @@ void pub_init()
     header.tags_capacity = 1;
     header.tags_num = 0;
     header.category = NULL;
+    header.target = NULL;
 }
 
 void pub_clear()
@@ -90,64 +92,64 @@ void pub_clear()
 #define BEGIN_TAG_LEN (strlen("<tag>"))
 #define END_TAG_LEN (strlen("</tag> ") + 1)
 #define TAG_LEN(s) (BEGIN_TAG_LEN + strlen(s) + END_TAG_LEN)
-
-char* tags_to_string()
-{
-    char* tags = NULL;
-    size_t tags_len = 0;
-    const int post_id = atoi(header.id + 5);
-    for (size_t i = 0; i < header.tags_num; i++) {
-        tags_len += sizeof(char) * TAG_LEN(header.tags[i]);
-        tags = realloc(tags, tags_len);
-        tags[tags_len - sizeof(char) * TAG_LEN(header.tags[i])] = '\0';
-        strcat(strcat(strcat(tags, "<tag>"), header.tags[i]), "</tag> ");
-        tags_add(post_id, header.tags[i]);
-    }
-    if (tags) {
-        size_t i;
-        for (i = strlen(tags) - 1; tags[i] != '>'; --i)
-            ;
-        tags[i + 1] = '\0';
-    }
-    index_add_entry(post_id, header.title);
-    return tags;
-}
-
 #define MAYBE(s) (s ? s : "")
 
-FILE* pub_header_print()
+int pub_header_print()
 {
-    if (!header.id) {
-        return NULL;
+    if (!pub_ok()) {
+        return 0;
     }
-    char* tags = tags_to_string();
     char filename[1024];
     sprintf(filename, "noticias/%s.html", header.id);
-    FILE* target = fopen(filename, "w");
-    fprintf(target,
-        "<html><head><meta charset='UTF-8' /></head>\n"
-        "<pub id=\"%s\">\n"
+    header.target = fopen(filename, "w");
+    fprintf(header.target,
+        "<html>\n"
+        "<head>\n"
+        "  <meta charset='UTF-8' />\n"
+        "</head>\n"
+        "<div id=\"%s\">\n"
         "  <title>%s</title>\n"
-        "  <author_date>%s</author_date>\n",
+        "  <h1 align='center'>%s</h1>\n"
+        "  <h2 align='center'>%s</h2>\n",
         header.id,
         MAYBE(header.title),
+        MAYBE(header.title),
         MAYBE(header.author_date));
-    if (tags) {
-        fprintf(target,
-            "  <tags>\n"
-            "    %s\n"
-            "  </tags>\n",
-            tags);
-    }
-    fprintf(target,
-        "  <category>%s</category>\n"
-        "  <text>\n",
+    fprintf(header.target,
+        "  <h4 align='center'>Categoria: %s</h3>\n"
+        "  <p>\n",
         MAYBE(header.category));
-    free(tags);
-    return target;
+    return 1;
 }
 
-const char* pub_id()
+void pub_append_text(const char* text)
 {
-    return header.id;
+    if (header.target)
+        fprintf(header.target, "%s", text);
+}
+
+void pub_footer_print()
+{
+    if(!header.target) return;
+    fprintf(header.target,
+        "  </p>\n"
+        " </div>\n"
+        "</body>\n");
+    if (header.tags_num != 0) {
+        fprintf(header.target, "<footer><p align='center'><font color='grey'><i>\n");
+        for (size_t i = 0; i < header.tags_num - 1; i++) {
+            fprintf(header.target, "%s | ", header.tags[i]);
+            tags_add(atoi(header.id + 5), header.tags[i]);
+        }
+        fprintf(header.target, "%s\n", header.tags[header.tags_num - 1]);
+        fprintf(header.target, "</font></i></p></footer>\n");
+    }
+    fprintf(header.target, "</html>");
+    fclose(header.target);
+    index_add_entry(atoi(header.id + 5), header.title);
+}
+
+int pub_ok()
+{
+    return header.id != NULL;
 }
