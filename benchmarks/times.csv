@@ -1,3 +1,4 @@
 implementation,mean,stddev,user,system,min,max,heap total,heap peak,stack peak
 No repeat checking,2.5803,0.0536,1.8766,0.6341,2.5057,2.6551,44219681,689740,4800
 Post-Tag Table,2.5413,0.0509,1.8554,0.6203,2.4743,2.6191,45390421,1198638,5008
+Add Index,2.5771,0.0460,1.8870,0.6313,2.5249,2.6565,45671942,1198638,5024
