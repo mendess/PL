@@ -51,7 +51,7 @@ int main() {
     index_init();
     yylex();
     yylex_destroy();
-    index_flush();
     tags_flush();
+    index_flush();
     return 0;
 }

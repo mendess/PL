@@ -24,7 +24,9 @@ OBJECTS=$(patsubst $(SOURCES_DIR)/%.c,$(T_RELEASE)/%.o,$(SOURCES))
 DEBUG_OBJECTS=$(patsubst $(SOURCES_DIR)/%.c,$(T_DEBUG)/%.o,$(SOURCES))
 EXE=mkhtml
 
-release: release_dir lex $(OBJECTS)
+# COMPILING
+
+release: release_dir output_dir lex $(OBJECTS)
 	$(CYAN)
 	cc $(OPTIMISE) $(CFLAGS) $(OBJECTS) $(LEX_OBJ) -I$(HEADERS) -o $(T_RELEASE)/$(EXE)
 	$(RESET)
@@ -34,7 +36,7 @@ $(OBJECTS): $(T_RELEASE)/%.o : $(SOURCES_DIR)/%.c
 	cc $(OPTIMISE) $(CFLAGS) -I$(HEADERS) -c $< -o $@
 	$(RESET)
 
-debug: debug_dir lex_debug $(DEBUG_OBJECTS)
+debug: debug_dir output_dir lex_debug $(DEBUG_OBJECTS)
 	$(CYAN)
 	cc $(DEBUG) $(CFLAGS) $(DEBUG_OBJECTS) $(LEX_OBJ) -I$(HEADERS) -o $(T_DEBUG)/$(EXE)
 	$(RESET)
@@ -60,22 +62,31 @@ lex_debug: $(SOURCES_DIR)/main.l
 	cc $(DEBUG) -I$(HEADERS) -c $(LEX_OUT) -o $(LEX_OBJ)
 	$(RESET)
 
+# DIRECTORIES
+
 release_dir:
 	@mkdir -p $(T_RELEASE)
 
 debug_dir:
 	@mkdir -p $(T_DEBUG)
 
-grind: debug
+output_dir:
+	@mkdir -p noticias/tags/
+
+# OTHER SCRIPTS
+grind: debug unicode
 	valgrind --leak-check=full --show-leak-kinds=all target/debug/mkhtml
 
-bench: release
+bench: release unicode
 	@mkdir -p benchmarks
 	./run-benchmarks.sh
+
+unicode:
+	./clean_unicode.sh input/folha8.OUT.clean.txt
 
 clean:
 	rm -rf $(T_RELEASE)
 	rm -rf $(T_DEBUG)
 	rm -rf $(T_LEX)
-	rm -f noticias/*
+	rm -rf noticias/*
 	rm -f $(EXE)

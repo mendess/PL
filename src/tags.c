@@ -1,62 +1,99 @@
+#include "config.h"
+#include "index.h"
 #include "util.h"
 #include <glib.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-static GHashTable* tags = NULL; // HashTable<int, HashSet<string>>
+static GTree* tags = NULL; // HashTable<string, HashSet<int>>
 
-static void g_hash_table_destroy_wrapper(void* v) { g_hash_table_destroy((GHashTable*)v); }
+static void destroy_wrapper(void* v) { g_hash_table_destroy((GHashTable*)v); }
+
+static int vstrcmp(const void* a, const void* b, void* _data)
+{
+    (void)_data;
+    return strcmp((char*)a, (char*)b);
+}
 
 void tags_init()
 {
-    tags = g_hash_table_new_full(g_int_hash, g_int_equal, free, g_hash_table_destroy_wrapper);
+    tags = g_tree_new_full(vstrcmp, NULL, free, destroy_wrapper);
 }
 
 void tags_add(int post_id, const char* tag)
 {
-    char * new_tag = g_strdup(tag);
-    GHashTable* post_table = g_hash_table_lookup(tags, &post_id);
+    GHashTable* post_table = g_tree_lookup(tags, tag);
     if (!post_table) {
-        post_table = g_hash_table_new_full(g_str_hash, g_str_equal, free, NULL);
-        int* id = malloc(sizeof(int));
-        *id = post_id;
-        g_hash_table_insert(tags, id, post_table);
+        post_table = g_hash_table_new_full(g_int_hash, g_int_equal, free, NULL);
+        g_tree_insert(tags, g_strdup(tag), post_table);
     }
-    g_hash_table_add(post_table, new_tag);
+    int* post_id_ptr = malloc(sizeof(int));
+    *post_id_ptr = post_id;
+    g_hash_table_add(post_table, post_id_ptr);
+}
+
+// FLUSHING A TAGS POSTS
+static void flush_post(void* /*int*/ post, void* _value, void* /*FILE**/ tag_posts)
+{
+    (void)_value;
+    FILE* f = (FILE*)tag_posts;
+    int post_id = *(int*)post;
+    char* title = index_lookup(post_id);
+    fprintf(
+        f,
+        "      <li><a href='post-%d.html'>%s</a></li>\n",
+        post_id,
+        title ? title : "Sem Titulo");
+}
+
+static void flush_posts(GHashTable* posts, char* tag)
+{
+    str_replace(tag, '/', '-');
+    char filename[1024];
+    sprintf(filename, NEWS_FOLDER TAGS_FOLDER "%s.html", (char*)tag);
+    FILE* tag_file = fopen(filename, "w");
+    if (!tag_file) {
+        fprintf(stderr, "Failed to open file: %s\n", filename);
+        return;
+    }
+    fprintf(tag_file,
+        "<html>\n"
+        "<head>\n"
+        "  <meta charset='UTF-8'/>\n"
+        "</head>\n"
+        "<body>\n"
+        "  <ul>\n");
+    g_hash_table_foreach(posts, flush_post, tag_file);
+    fprintf(tag_file,
+        "  </ul>\n"
+        "</body>\n"
+        "</html>");
+    fclose(tag_file);
+}
+
+// FLUSHING THE TAG FILES
+static int flush_tag(void* /*string*/ tag, void* /*GHashTable*/ posts, void* file)
+{
+    FILE* f = (FILE*)file;
+    flush_posts((GHashTable*)posts, (char*)tag);
+    fprintf(f, "      <li><a href='" TAGS_FOLDER "%s.html'>%s</a></li>\n", (char*)tag, (char*)tag);
+    return 0;
 }
 
 void tags_flush()
 {
-    FILE* f = fopen("noticias/tags.txt", "w");
-    GHashTable* tag_counts = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, free); // HashTable<&str, int>
-
-    GHashTableIter tags_iter;
-    GHashTable* post_tags;
-    g_hash_table_iter_init(&tags_iter, tags);
-    while (g_hash_table_iter_next(&tags_iter, NULL, (void**)&post_tags)) { // for post_tags in tags
-        GHashTableIter post_tags_iter;
-        g_hash_table_iter_init(&post_tags_iter, post_tags);
-        char* tag;
-        while (g_hash_table_iter_next(&post_tags_iter, (void*)&tag, NULL)) { // for tag in post_tags
-            int* counter;
-            if ((counter = g_hash_table_lookup(tag_counts, tag))) { // tags_count.entry(tag).and_modify(++).or_insert(1)
-                (*counter)++;
-            } else {
-                counter = malloc(sizeof(int));
-                *counter = 1;
-                g_hash_table_insert(tag_counts, tag, counter);
-            }
-        }
-    }
-    GHashTableIter tag_counts_iter;
-    char* tag;
-    int* count;
-    g_hash_table_iter_init(&tag_counts_iter, tag_counts);
-    while (g_hash_table_iter_next(&tag_counts_iter, (void**)&tag, (void**)&count)) {
-        fprintf(f, "%d\t%s\n", *count, tag);
-    }
-    fclose(f);
-    g_hash_table_destroy(tag_counts);
-    g_hash_table_destroy(tags);
+    FILE* tags_file = fopen(NEWS_FOLDER "tags.html", "w");
+    fprintf(tags_file,
+        "<html>\n"
+        "<head>\n"
+        "  <meta charset='UTF-8'/>\n"
+        "</head>\n"
+        "<body>\n"
+        "  <ul>\n");
+    g_tree_foreach(tags, flush_tag, tags_file);
+    fprintf(tags_file,
+        "  </ul>\n"
+        "</body>\n"
+        "</html>");
+    fclose(tags_file);
+    g_tree_destroy(tags);
 }

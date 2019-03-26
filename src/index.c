@@ -1,3 +1,4 @@
+#include "config.h"
 #include <glib.h>
 #include <stdio.h>
 
@@ -8,7 +9,7 @@ static int vintcmp(const void* a, const void* b, void* data)
     (void)data;
     int av = *(int*)a;
     int bv = *(int*)b;
-    return av - bv;
+    return (av < bv) ? -1 : (av == bv) ? 0 : 1;
 }
 
 void index_init()
@@ -26,27 +27,34 @@ void index_add_entry(int entry, char* title)
 static int add_entry(void* key, void* value, void* file)
 {
     FILE* f = (FILE*)file;
-    fprintf(f, "      <li><a href='post-%d.html'>%s</a></li>\n", *(int*)key, (char*)value);
+    fprintf(
+        f,
+        "      <li><a href='post-%d.html'>%s</a></li>\n",
+        *(int*)key,
+        value ? (char*)value : "Sem titulo");
     return 0;
+}
+
+char* index_lookup(int post_id)
+{
+    return g_tree_lookup(index, &post_id);
 }
 
 void index_flush()
 {
-    FILE* index_file = fopen("noticias/index.html", "w");
+    FILE* index_file = fopen(NEWS_FOLDER "index.html", "w");
     fprintf(index_file,
-            "<html>\n"
-            "<head>\n"
-            "  <meta charset='UTF-8'/>\n"
-            "</head>\n"
-            "<body>\n"
-            "  <ul>\n"
-            );
+        "<html>\n"
+        "<head>\n"
+        "  <meta charset='UTF-8'/>\n"
+        "</head>\n"
+        "<body>\n"
+        "  <ul>\n");
     g_tree_foreach(index, add_entry, index_file);
     fprintf(index_file,
-            "  </ul>\n"
-            "</body>\n"
-            "</html>"
-            );
+        "  </ul>\n"
+        "</body>\n"
+        "</html>");
     fclose(index_file);
     g_tree_destroy(index);
 }
