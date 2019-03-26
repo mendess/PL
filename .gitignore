@@ -55,3 +55,8 @@ mkhtml
 lex_out.c
 noticias
 input
+
+*.toc
+*.aux
+*.log
+Report.pdf
