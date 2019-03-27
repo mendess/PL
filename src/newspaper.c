@@ -34,7 +34,7 @@ Pub newspaper_new_pub(int post_id, const char* title, char** tags, size_t tags_n
     char** new_tags = malloc(sizeof(char*) * tags_num);
     for (size_t i = 0; i < tags_num; i++)
         new_tags[i] = str_replace(g_strdup(tags[i]), '/', '-');
-    return (Pub){
+    return (Pub) {
         .post_id = post_id,
         .title = g_strdup(title),
         .tags = new_tags,
@@ -63,7 +63,7 @@ static int vintcmp(const void* a, const void* b, void* data)
     (void)data;
     int av = *(int*)a;
     int bv = *(int*)b;
-    return av- bv; // (av < bv) ? -1 : (av == bv) ? 0 : 1;
+    return av - bv;
 }
 
 static void pub_delete(void* pub)
@@ -160,7 +160,7 @@ void tags_add_pub(Pub* pub)
             post_table = g_hash_table_new_full(g_int_hash, g_int_equal, free, NULL);
             g_tree_insert(tags, g_strdup(tag), post_table);
         }
-        int * post_id = malloc(sizeof(int));
+        int* post_id = malloc(sizeof(int));
         *post_id = pub->post_id;
         g_hash_table_add(post_table, post_id);
     }
@@ -175,7 +175,7 @@ static void flush_post(void* /*int*/ post, void* _value, void* /*FILE**/ tag_pos
     Pub* pub = index_lookup(post_id);
     fprintf(
         f,
-        "      <li><a href='post-%d.html'>%s</a></li>\n",
+        "      <li><a href='../post-%d.html'>%s</a></li>\n",
         post_id,
         pub->title ? pub->title : "Sem Titulo");
 }

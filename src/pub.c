@@ -1,4 +1,5 @@
 #include "pub.h"
+#include "config.h"
 #include "newspaper.h"
 #include "util.h"
 #include <stddef.h>
@@ -134,13 +135,22 @@ void pub_footer_print()
     fprintf(header.target,
         "  </p>\n"
         " </div>\n"
+        " <div align='center'><a href='index.html'>De volta para o indice</a></div>\n"
         "</body>\n");
     if (header.tags_num != 0) {
         fprintf(header.target, "<footer><p align='center'><font color='grey'><i>\n");
         for (size_t i = 0; i < header.tags_num - 1; i++) {
-            fprintf(header.target, "%s | ", header.tags[i]);
+            fprintf(
+                header.target,
+                "<a href='" TAGS_FOLDER "%s.html'>%s</a> | ",
+                str_replace(header.tags[i], '/', '-'),
+                header.tags[i]);
         }
-        fprintf(header.target, "%s\n", header.tags[header.tags_num - 1]);
+        fprintf(
+            header.target,
+            "<a href='" TAGS_FOLDER "%s.html'>%s</a>\n",
+            str_replace(header.tags[header.tags_num - 1], '/', '-'),
+            header.tags[header.tags_num - 1]);
         fprintf(header.target, "</font></i></p></footer>\n");
     }
     fprintf(header.target, "</html>");
