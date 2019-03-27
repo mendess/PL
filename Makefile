@@ -82,7 +82,7 @@ bench: release unicode
 	./run-benchmarks.sh
 
 unicode:
-	./clean_unicode.sh input/folha8.OUT.clean.txt
+	./clean_unicode.sh input/folha8.OUT.txt
 
 clean:
 	rm -rf $(T_RELEASE)

@@ -1,6 +1,5 @@
 #include "pub.h"
-#include "index.h"
-#include "tags.h"
+#include "newspaper.h"
 #include "util.h"
 #include <stddef.h>
 #include <stdio.h>
@@ -130,7 +129,8 @@ void pub_append_text(const char* text)
 
 void pub_footer_print()
 {
-    if(!header.target) return;
+    if (!header.target)
+        return;
     fprintf(header.target,
         "  </p>\n"
         " </div>\n"
@@ -139,14 +139,18 @@ void pub_footer_print()
         fprintf(header.target, "<footer><p align='center'><font color='grey'><i>\n");
         for (size_t i = 0; i < header.tags_num - 1; i++) {
             fprintf(header.target, "%s | ", header.tags[i]);
-            tags_add(atoi(header.id + 5), header.tags[i]);
         }
         fprintf(header.target, "%s\n", header.tags[header.tags_num - 1]);
         fprintf(header.target, "</font></i></p></footer>\n");
     }
     fprintf(header.target, "</html>");
     fclose(header.target);
-    index_add_entry(atoi(header.id + 5), header.title);
+    newspaper_add_publication(
+        newspaper_new_pub(
+            atoi(header.id + 5),
+            header.title,
+            header.tags,
+            header.tags_num));
 }
 
 int pub_ok()

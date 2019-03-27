@@ -3,8 +3,7 @@
 %{
 #include <string.h>
 #include "pub.h"
-#include "tags.h"
-#include "index.h"
+#include "newspaper.h"
 int has_category = 0;
 #define END_PUB (BEGIN INITIAL, pub_clear())
 %}
@@ -47,11 +46,9 @@ D    [0-9]
 %%
 
 int main() {
-    tags_init();
-    index_init();
+    newspaper_init();
     yylex();
     yylex_destroy();
-    tags_flush();
-    index_flush();
+    newspaper_flush();
     return 0;
 }
