@@ -92,7 +92,7 @@ static int flush_entry(void* key, void* value, void* file)
     Pub* pub = (Pub*)value;
     fprintf(
         f,
-        "    <tr><td><a href='post-%d.html'>%s</a></td>",
+        "    <tr><td style='border-right: 1px solid #000;'><a href='post-%d.html'>%s</a></td>",
         *(int*)key,
         pub->title ? pub->title : "Sem titulo");
     for (size_t i = 0; i < pub->tags_num; i++) {
@@ -120,8 +120,11 @@ void index_flush()
         "  <meta charset='UTF-8'/>\n"
         "</head>\n"
         "<body>\n"
+        "  <h1>Jornal Angolano</h1>\n"
+        "  <h3><a href='tags.html'>Tags (%d)</a></h3>\n"
         "  <table>\n"
-        "    <tr><th>Titulo</th><th>Tags</th></tr>\n");
+        "    <tr><th style='border-right: 1px solid #000;'>Titulo</th><th>Tags</th></tr>\n",
+        g_tree_nnodes(tags));
     g_tree_foreach(index, flush_entry, index_file);
     fprintf(index_file,
         "  </table>\n"

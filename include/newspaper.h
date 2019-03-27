@@ -12,7 +12,7 @@ typedef struct _pub {
 
 void newspaper_init();
 
-Pub newspaper_new_pub(int post_id, const char*, char**, size_t);
+Pub newspaper_new_pub(int, const char*, char**, size_t);
 
 void newspaper_add_publication(Pub pub);
 
