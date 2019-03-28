@@ -206,11 +206,17 @@ static void flush_posts(GHashTable* posts, char* tag)
 }
 
 // FLUSHING THE TAG FILES
-static int flush_tag(void* /*string*/ tag, void* /*GHashTable*/ posts, void* file)
+static int flush_tag(void* /*char* */ tag, void* /*GHashTable* */ _posts, void* file)
 {
     FILE* f = (FILE*)file;
-    flush_posts((GHashTable*)posts, (char*)tag);
-    fprintf(f, "      <li><a href='" TAGS_FOLDER "%s.html'>%s</a></li>\n", (char*)tag, (char*)tag);
+    GHashTable* posts = (GHashTable*)_posts;
+    flush_posts(posts, (char*)tag);
+    fprintf(
+        f,
+        "  <tr><td style='text-align: center;'>%d</td><td><a href='" TAGS_FOLDER "%s.html'>%s</a></td></tr>\n",
+        g_hash_table_size(posts),
+        (char*)tag,
+        (char*)tag);
     return 0;
 }
 
@@ -223,10 +229,11 @@ void tags_flush()
         "  <meta charset='UTF-8'/>\n"
         "</head>\n"
         "<body>\n"
-        "  <ul>\n");
+        "  <table>\n"
+        "  <tr><th>Ocorrencia</th><th>Tag</th></tr>\n");
     g_tree_foreach(tags, flush_tag, tags_file);
     fprintf(tags_file,
-        "  </ul>\n"
+        "  </table>\n"
         "</body>\n"
         "</html>");
     fclose(tags_file);
