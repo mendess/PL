@@ -75,7 +75,7 @@ output_dir:
 
 # OTHER SCRIPTS
 grind: debug unicode
-	valgrind --leak-check=full --show-leak-kinds=all target/debug/mkhtml
+	valgrind --leak-check=full --show-leak-kinds=all target/debug/mkhtml input/folha8.OUT.clean.txt
 
 bench: release unicode
 	@mkdir -p benchmarks

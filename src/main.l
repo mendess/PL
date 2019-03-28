@@ -2,6 +2,10 @@
 
 %{
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "pub.h"
 #include "newspaper.h"
 int has_category = 0;
@@ -50,10 +54,18 @@ D    [0-9]
 <INITIAL,DATE>.|\n              { ; }
 %%
 
-int main() {
+int main(int argc, const char** argv) {
     newspaper_init();
-    yylex();
-    yylex_destroy();
+    if(argc == 1) {
+        yylex();
+        yylex_destroy();
+    } else {
+        for(int i = 1; i < argc; i++) {
+            dup2(open(argv[i], O_RDONLY), 0);
+            yylex();
+        }
+        yylex_destroy();
+    }
     newspaper_flush();
     return 0;
 }
