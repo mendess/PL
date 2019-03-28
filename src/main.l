@@ -10,7 +10,9 @@ int has_category = 0;
 SEP  [ \t]
 D    [0-9]
 %x HEADER
+%x DATE
 %x TEXT
+%x TEXTHEADER
 %%
 "<pub>"\n*                      { BEGIN HEADER; pub_init(); has_category = 0; }
 <HEADER>"tag:{"[^}]+"}"         { yytext[yyleng - 1] = '\0'; pub_tags_append(yytext + 5); }
@@ -25,16 +27,19 @@ D    [0-9]
                                     pub_title_append(yytext)
                                     : pub_category_add(yytext);
                                 }
-<HEADER>(━)+\n                  { if(pub_ok()) { BEGIN TEXT; } else { END_PUB; }}
+<HEADER>(━)+\n                  { if(pub_ok()) { BEGIN DATE; } else { END_PUB; }}
 <HEADER>.|\n                    { ; }
-<TEXT>"#DATE:".*\n              {
+<DATE>"#DATE:".*\n              {
                                     yytext[yyleng - 1] = '\0';
                                     char* date = yytext + strlen("#DATE:");
                                     while(*(date++) != ']'); // skip to after ']'
                                     while(*(++date) == ' '); // skip spaces
                                     pub_author_date_add(date);
                                     if(!pub_header_print()) { END_PUB; }
+                                    BEGIN TEXTHEADER;
                                 }
+<TEXTHEADER>"["[^]]*"]"         { BEGIN TEXT; }
+<TEXTHEADER>.|\n                { pub_append_text(yytext); BEGIN TEXT; }
 <TEXT>.|\n                      { pub_append_text(yytext); }
 <TEXT>"Etiquetas:".*\n          { ; }
 <TEXT>"</pub>"\n                {
@@ -42,7 +47,7 @@ D    [0-9]
                                     END_PUB;
                                 }
 <*>"PARTILHE VIA:"{SEP}*        { ; }
-.|\n                            { ; }
+<INITIAL,DATE>.|\n              { ; }
 %%
 
 int main() {
