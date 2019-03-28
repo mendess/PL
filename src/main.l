@@ -21,13 +21,13 @@ D    [0-9]
                                     while(*(id++) != '{'); // skip to 'post'
                                     pub_id_add(id);
                                 }
-<HEADER>^[^\n#<━][^{\n]+\n      {
+<HEADER>^[^\n#<][^{\n#]+\n      {
                                     yytext[yyleng - 1] = '\0';
                                     has_category++ ?
                                     pub_title_append(yytext)
                                     : pub_category_add(yytext);
                                 }
-<HEADER>(━)+\n                  { if(pub_ok()) { BEGIN DATE; } else { END_PUB; }}
+<HEADER>##+\n                   { if(pub_ok()) { BEGIN DATE; } else { END_PUB; }}
 <HEADER>.|\n                    { ; }
 <DATE>"#DATE:".*\n              {
                                     yytext[yyleng - 1] = '\0';

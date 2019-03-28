@@ -47,10 +47,11 @@ void pub_title_append(const char* title)
         return;
     }
     if (header.title == NULL) {
-        header.title = malloc(sizeof(char) * strlen(title) + 1);
+        header.title = malloc(sizeof(char) * strlen(title) + 2);
         header.title[0] = '\0';
     } else {
-        header.title = realloc(header.title, sizeof(char) * (strlen(header.title) + strlen(title)) + 1);
+        header.title = realloc(header.title, sizeof(char) * (strlen(header.title) + strlen(title) + 2));
+        strcat(header.title, "\n");
     }
     strcat(header.title, title);
 }

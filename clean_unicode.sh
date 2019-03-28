@@ -8,5 +8,5 @@ fi
 
 for f in "$@"
 do
-    sed 's/“/"/g ; s/”/"/g ; s/…/.../g ; s/–/-/g' "$f" > "${f%.*}".clean.txt
+    sed 's/━/#/g' "$f" > "${f%.*}".clean.txt
 done
