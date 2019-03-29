@@ -196,7 +196,9 @@ static void flush_posts(GHashTable* posts, char* tag)
         "  <meta charset='UTF-8'/>\n"
         "</head>\n"
         "<body>\n"
-        "  <ul>\n");
+        "  <h1>%s</h1>"
+        "  <ul>\n",
+        (char*)tag);
     g_hash_table_foreach(posts, flush_post, tag_file);
     fprintf(tag_file,
         "  </ul>\n"
