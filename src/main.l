@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "pub.h"
+#include "publication.h"
 #include "newspaper.h"
 int has_category = 0;
 #define END_PUB (BEGIN INITIAL, pub_clear())

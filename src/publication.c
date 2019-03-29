@@ -1,4 +1,4 @@
-#include "pub.h"
+#include "publication.h"
 #include "config.h"
 #include "newspaper.h"
 #include "util.h"
