@@ -1,7 +1,6 @@
 \documentclass[a4paper]{article}
 \usepackage[utf8]{inputenc}
 \usepackage{multirow}
-\usepackage[portuguese]{babel}
 \usepackage{graphicx}
 \usepackage{a4wide}
 \usepackage[pdftex,hidelinks]{hyperref}
@@ -20,8 +19,6 @@
 \date{\today}
 
 \begin{titlepage}
-
-    %título
     \thispagestyle{empty}
     \begin{center}
         \begin{minipage}{0.75\linewidth}
@@ -30,9 +27,11 @@
             \includegraphics[width=0.4\textwidth]{eng.jpeg}\par\vspace{1cm}
             \vspace{1.5cm}
             %títulos
-            \href{https://www.uminho.pt/PT}{\scshape\LARGE Universidade do Minho} \par
+            \href{https://www.uminho.pt/PT}
+            {\scshape\LARGE Universidade do Minho} \par
             \vspace{1cm}
-            \href{https://www.di.uminho.pt/}{\scshape\Large Departamento de Informática} \par
+            \href{https://www.di.uminho.pt/}
+            {\scshape\Large Departamento de Informática} \par
             \vspace{1.5cm}
 
             \maketitle
@@ -62,7 +61,8 @@ The first and most obvious one is the file's size, it's millions of lines long
 which means that the information parsed needs to be flushed as soon as it's not
 needed anymore as to not risk allocating too much memory.
 
-The second is the publication's format, which in some cases does not lend itself to clean regular expressions.
+The second is the publication's format, which in some cases does not lend
+itself to clean regular expressions.
 
 \begin{figure}[H]
     \includegraphics[width=\textwidth]{./example_pub_colored_simple.png}
@@ -79,9 +79,16 @@ Grasseli''} respectively, have to be parsed using the rest of the header's
 context. Next, sometimes there is a sequence delimited by square brackets before
 the text, this is also intended to be eliminated.
 
-The third and final problem to be addressed is the fact that most publications
+The third problem to be addressed is the fact that most publications
 are repeated throughout the file which can interfere with the counting of the
 number of occurrences of each tag.
+
+Lastly the fourth problem is that \textit{flex} is not unicode aware,
+which means that it reads one byte at a time and since the first byte of the
+horizontal bar is the same as the first byte of many other unicode characters
+they are indistinguishable from \textit{flex}'s perspective. To solve this a
+simple \textit{bash} script \texttt{clean\_unicode.sh} was written to replace
+the horizontal bar with a sequence of \texttt{\#}.
 
 \section{Solution}
 
@@ -104,32 +111,16 @@ relatively easy to parse, the same goes for the id. To parse the category and
 title a variable is used to know if the category has been parsed, since the
 same regular expression is used for both.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[draft]{./header_automata.png}
-    \caption{HEADER automata}
-\end{figure}
-
 \subsubsection{DATE}
 
-The date context is started when the horizontal bar is found, and all input strings are ignored until the \texttt{\#DATE} string is matched. At this point the date is stored and the next context is started.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[draft]{./date_automata.png}
-    \caption{DATE automata}
-\end{figure}
+The date context is started when the horizontal bar is found, and all input
+strings are ignored until the \texttt{\#DATE} string is matched. At this point
+the date is stored and the next context is started.
 
 \subsubsection{TEXTHEADER}
 
 This context serves only to remove the text between square brackets at the top
 of the body, then immediately switches to the \texttt{TEXT} context.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[draft]{./textheader_automata.png}
-    \caption{TEXTHEADER automata}
-\end{figure}
 
 \subsubsection{TEXT}
 
@@ -137,19 +128,48 @@ This context is very simple, it simply writes what it finds to the output file,
 ignoring lines staring with \textit{Etiquetas:} and stopping when it finds the
 end of the publication.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[draft]{./text_automata.png}
-    \caption{TEXT automata}
-\end{figure}
-
 \section{Performance}
 
-Program performance was a concern during implementation
+Program performance was a concern during it's implementation. As such for every
+major feature or change made to the program time and memory benchmarks were
+ran. With this system it was possible to detect a huge performance increase
+when a simple change of regular expression was made.
+
+One of regular expressions initially used was very slow and incorrect.
+\begin{figure}[H]
+    \centering
+    \begin{verbatim}
+                        AN   [0-9A-Za-zÀ-ÖØ-öø-ÿ\-]
+                        ANS  [0-9A-Za-zÀ-ÖØ-öø-ÿ\- ]
+
+                        <HEADER>{AN}{ANS}+\n
+    \end{verbatim}
+    \caption{First regular expression to capture the category and title}
+\end{figure}
+
+This was made in an effort to capture accented characters, but because, once
+again, \textit{flex} is not unicode aware, these ranges did not work properly.
+To address this, a different strategy was used, instead of listing what
+characters were to be matched, we listed what characters were not to be
+matched:
+
+\begin{figure}[H]
+    \centering
+    \begin{verbatim}
+                        <HEADER>^[^\n#<][^{\n#]+\n
+    \end{verbatim}
+    \caption{Correct regular expression to capture the category and title}
+\end{figure}
+
+This change cut 40\% of the programs runtime, (benchmarked from 2.5s to 1.5s)
+because the list of bytes that had to be compared with was smaller. With the
+added benefit of capturing more precisely titles that had unicode characters,
+such as  ``,  '', --, etc.
 
 \section{Project Architecture}
 
-Handling of the parsed information is split in two modules, \texttt{publication} and \texttt{newspaper}.
+Handling of the parsed information is split in two modules,
+\texttt{publication} and \texttt{newspaper}.
 
 \subsection{Publication}
 
