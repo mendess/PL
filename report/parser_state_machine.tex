@@ -1,0 +1,38 @@
+%Requires:
+%\usepackage{tikz}
+%\usetikzlibrary{positioning,automata,decorations.markings}
+\begin{tikzpicture}[font=\ttfamily,auto]
+    \node[state,initial,accepting,text width=13mm,align=center] (initial) {INITIAL};
+    \node[state,text width=22mm,align=center] (header1) [right=4.5cm of initial] {HEADER (with category)};
+    \node[state,text width=18mm,align=center] (header0) [above=of header1] {HEADER (no category)};
+    \node[state,text width=10mm,align=center] (date) [below=of header1] {DATE};
+    \node[state,text width=18mm,align=center] (textheader)  [below=of date] {TEXTHEADER};
+    \node[state,text width=10mm,align=center] (text) [below=of textheader] {TEXT};
+    \path[thick,->]
+    (initial)    edge [bend left] node {/"<pub>"\char`\\n*/} (header0)
+                 edge [loop above] node {.|\char`\\n} ()
+
+    (header0)    edge [loop right] node [text width=1.5cm,align=center]
+                        {/"\#ID:"\{SEP\}*\{post-\{D\}+/
+                        /"tag:\{"[\char`\^\}]+"\}"/} ()
+                 edge node {/\char`\^[\char`\^\char`\\n\#<][\char`\^\{\char`\\n\#]+\char`\\n/} (header1)
+                 edge [bend right=14,red,pos=0.7] node {/\#\#+\char`\\n/ \&\& !pub\_ok()} (initial)
+
+    (header1)    edge [loop right] node [text width=1.5cm,align=center]
+                        {/"\#ID:"\{SEP\}*\{post-\{D\}+/
+                         /"tag:\{"[\char`\^\}]+"\}"/
+                         /\char`\^[\char`\^\char`\\n\#<][\char`\^\{\char`\\n\#]+\char`\\n/
+                         } ()
+                 edge node {/\#\#+\char`\\n/ \&\& pub\_ok()} (date)
+                 edge [red] node {/\#\#+\char`\\n/ \&\& !pub\_ok()} (initial)
+
+    (date)       edge node {/"\#DATE:".*\char`\\n/} (textheader)
+
+    (textheader) edge node {/"["[\char`\^]]*"]"/} (text)
+
+    (text)       edge [loop below] node {/.|\char`\\n/} ()
+                 edge [loop right] node {/"Etiquetas:".*\char`\\n/} ()
+                 edge [bend left] node {/"</pub>"\char`\\n/} (initial)
+    ;
+\end{tikzpicture}
+

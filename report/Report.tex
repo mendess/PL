@@ -1,16 +1,11 @@
 \documentclass[a4paper]{article}
 \usepackage[utf8]{inputenc}
-\usepackage{multirow}
-\usepackage{graphicx}
 \usepackage{a4wide}
 \usepackage[pdftex,hidelinks]{hyperref}
-\usepackage{float}
-\usepackage{indentfirst}
 \usepackage{subcaption}
 \usepackage[cache=false]{minted}
-\usepackage{amsmath}
-\usepackage{listings}
-\usepackage{color}
+\usepackage{tikz}
+\usetikzlibrary{positioning,automata,decorations.markings}
 
 \begin{document}
 
@@ -23,17 +18,14 @@
     \begin{center}
         \begin{minipage}{0.75\linewidth}
             \centering
-            %engenharia logo
             \includegraphics[width=0.4\textwidth]{eng.jpeg}\par\vspace{1cm}
             \vspace{1.5cm}
-            %títulos
             \href{https://www.uminho.pt/PT}
             {\scshape\LARGE Universidade do Minho} \par
             \vspace{1cm}
             \href{https://www.di.uminho.pt/}
             {\scshape\Large Departamento de Informática} \par
             \vspace{1.5cm}
-
             \maketitle
         \end{minipage}
     \end{center}
@@ -53,7 +45,7 @@ language) together with the \href{https://developer.gnome.org/}{GLib} library,
 to produce an efficient parser. On top of this a \textit{bash} script was
 written to pre-process the input file.
 
-\section{The problem}
+\section{Problem}
 
 The input file presents a few challenges that need to be addressed.
 
@@ -73,9 +65,9 @@ As can be seen in the example above (Figure~\ref{fig:example_pub_simple}), a
 publication is split in roughly 2 parts, the header, in red, where the post's
 metadata is stored and the body or text of the publication, in green. The first
 area has tags, id and date which are easy to find due to their
-\texttt{\#NAME\{} syntax, but the category and the title, in this example
+\texttt{\#NAME\{} syntax, but the category and the title (in this example
 \textit{``Desporto''} and \textit{``Adpetos de Petro contestam Alexandre
-Grasseli''} respectively, have to be parsed using the rest of the header's
+Grasseli''} respectively) have to be parsed using the rest of the header as
 context. Next, sometimes there is a sequence delimited by square brackets before
 the text, this is also intended to be eliminated.
 
@@ -88,7 +80,7 @@ which means that it reads one byte at a time and since the first byte of the
 horizontal bar is the same as the first byte of many other unicode characters
 they are indistinguishable from \textit{flex}'s perspective. To solve this a
 simple \textit{bash} script \texttt{clean\_unicode.sh} was written to replace
-the horizontal bar with a sequence of \texttt{\#}.
+the horizontal bar with a sequence of \verb!#!.
 
 \section{Solution}
 
@@ -128,6 +120,65 @@ This context is very simple, it simply writes what it finds to the output file,
 ignoring lines staring with \textit{Etiquetas:} and stopping when it finds the
 end of the publication.
 
+\begin{figure}[H]
+    \input{parser_state_machine.tex}
+    \caption{Parser state machine}
+\end{figure}
+
+As can be seen, there are two error paths that can be taken from the
+\textit{HEADER} context back to the \textit{INITIAL} context in case the end of
+the header (marked by the sequence of \verb!#!) is reached and no `id' has been
+parsed.
+
+\subsection{Project Architecture}
+
+Handling of the parsed information is split in two modules,
+\texttt{publication} and \texttt{newspaper}.
+
+\subsubsection{Publication}
+
+This module gathers the information of a single publication to create the
+corresponding \texttt{post-id.html} file. When a publication is found this
+module is initialized and, as the parser runs, this structure accumulates the
+\texttt{id}, \texttt{title}, \texttt{author\_date}, \texttt{category} and
+\texttt{tags}, then after the header is flushed to the post file, the body of
+the publication is immediately flushed to the file as to not accumulate to many
+bytes in memory.
+
+\subsubsection{Newspaper}
+
+This module indexes posts and their tags to create several files. An
+\texttt{index.html} file which references all the parsed posts in a list next
+to their tags. A \texttt{tags.html} file which lists all the tags found next to
+their occurrence count, and finally a \texttt{tagname.hmtl} for every tag
+which lists every file with that tag.
+
+To achieve this two tables are kept in memory during the parsing of the whole
+input string, one associates post ids with the post's title and tags, the other
+associates tags with their posts. This way the relations shown below can be
+achieved.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.54\textwidth}
+        \includegraphics[width=\textwidth]{./index_print.png}
+        \caption{index.html}
+    \end{subfigure}
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=\textwidth]{./tags_print.png}
+        \caption{tags.html}
+    \end{subfigure}
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=\textwidth]{./tag_print.png}
+        \caption{tag.html}
+    \end{subfigure}
+    \begin{subfigure}{0.54\textwidth}
+        \includegraphics[width=\textwidth]{./publication_print.png}
+        \caption{publication.html}
+    \end{subfigure}
+    \caption{Files generated by the newspaper module}
+\end{figure}
+
 \section{Performance}
 
 Program performance was a concern during it's implementation. As such for every
@@ -166,56 +217,11 @@ because the list of bytes that had to be compared with was smaller. With the
 added benefit of capturing more precisely titles that had unicode characters,
 such as  ``,  '', --, etc.
 
-\section{Project Architecture}
-
-Handling of the parsed information is split in two modules,
-\texttt{publication} and \texttt{newspaper}.
-
-\subsection{Publication}
-
-This module gathers the information of a single publication to create the
-corresponding \texttt{post-id.html} file. When a publication is found this
-module is initialized and, as the parser runs, this structure accumulates the
-\texttt{id}, \texttt{title}, \texttt{author\_date}, \texttt{category} and
-\texttt{tags}, then after the header is flushed to the post file, the body of
-the publication is immediately flushed to the file as to not accumulate to many
-bytes in memory.
-
-\subsection{Newspaper}
-
-This module indexes posts and their tags to create several files. An
-\texttt{index.html} file which references all the parsed posts in a list next
-to their tags. A \texttt{tags.html} file which lists all the tags found next to
-their occurrence count, and finally a \texttt{<tagname>.hmtl} for every tag
-which lists every file with that tag.
-
-To achieve this two tables are kept in memory during the parsing of the whole
-input string, one associates post ids with the post's title and tags, the other
-associates tags with their posts. This way the relations shown below can be
-achieved.
-
-\begin{figure}[H]
-    \centering
-    \begin{subfigure}{0.54\textwidth}
-        \includegraphics[width=\textwidth]{./index_print.png}
-        \caption{index.html}
-    \end{subfigure}
-    \begin{subfigure}{0.45\textwidth}
-        \includegraphics[width=\textwidth]{./tags_print.png}
-        \caption{tags.html}
-    \end{subfigure}
-    \begin{subfigure}{0.45\textwidth}
-        \includegraphics[width=\textwidth]{./tag_print.png}
-        \caption{tag.html}
-    \end{subfigure}
-    \begin{subfigure}{0.54\textwidth}
-        \includegraphics[width=\textwidth]{./publication_print.png}
-        \caption{publication.html}
-    \end{subfigure}
-    \caption{Files generated by the newspaper module}
-\end{figure}
-
 \section{Conclusion}
+
+In conclusion, all the objectives set out in the assignment were fulfilled as
+well as some extra functionality. As an extension of this work a \textit{CSS}
+file could be added to improve the visual appeal of the generated pages.
 
 \end{document}
 
