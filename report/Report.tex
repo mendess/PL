@@ -260,6 +260,25 @@ such as  ``,  '', --, etc.
 
 The benchmarks made during the software's development can be seen in Apendix~\ref{app:benches}.
 
+\chapter{Testing}
+
+To test the correctness of the program, a few bash utils were used, notably common \textit{unix} programs like \textit{grep}, \textit{cat}, \textit{sed}, \textit{sort}, \textit{uniq} and, of course, the \textit{bash}.
+
+% Count the number of times the 'regime' tag comes up in the processed articles
+\verb!cat noticias/*.html | grep -oc '<tag>regime</tag>'!
+
+% Count the number of times the 'regime' tag comes up in the original file
+\verb! grep -o 'tag:{regime}' input/folha8.OUT.txt | wc -l!
+
+% Contagem total distiguindo quantos e que estao repetidos e quantas vezes, e quais os restantes nao repetidos.
+\verb!grep -Po 'post-[0-9]+' input/folha8.OUT.txt | sort | uniq -c | sort -n -r | cut -d' ' -f7 | uniq -c!
+
+% Count the number of uniq tags in the tags.html file
+\verb!grep -oP 'tags/[^.]+\.html' noticias/tags.html | sort | uniq | wc -l!
+
+% Count the number of uniq tags in the post* files
+\verb!grep -oP 'tags/[^.]+\.html' noticias/post* | awk -F':' '{print $2}' | sort | uniq | wc -l!
+
 
 \chapter{Conclusion}
 
