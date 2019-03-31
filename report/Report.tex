@@ -84,7 +84,8 @@ The program must fulfil the following requirements:
     \item Create an article $\to$ tag association.
 \end{itemize}
 
-The input file presents a few challenges that need to be addressed, in order to fulfil the proposed requirements.
+The input file presents a few challenges that need to be addressed, in order to
+fulfil the proposed requirements.
 
 The first and most obvious one is the file's size. The file is millions of lines long
 which means that the information parsed needs to be flushed as soon as it's not
@@ -250,7 +251,8 @@ matched.
     \begin{verbatim}
                         <HEADER>^[^\n#<][^{\n#]+\n
     \end{verbatim}
-    \caption{Correct regular expression to capture the category and title}\label{fig:new-regex}
+    \caption{Correct regular expression to capture the category and
+    title}\label{fig:new-regex}
 \end{figure}
 
 This change cut 40\% of the program's runtime, (benchmarked from 2.5s to 1.5s)
@@ -258,11 +260,14 @@ because the list of bytes that had to be compared with was smaller, with the
 added benefit of capturing more precisely titles that had unicode characters,
 such as  ``,  '', --, etc.
 
-The benchmarks made during the software's development can be seen in Apendix~\ref{app:benches}.
+The benchmarks made during the software's development can be seen in
+Apendix~\ref{app:benches}.
 
 \chapter{Testing}
 
-To test the correctness of the program, a few bash utils were used, notably common \textit{unix} programs like \textit{grep}, \textit{cat}, \textit{sed}, \textit{sort}, \textit{uniq} and, of course, the \textit{bash}.
+To test the correctness of the program, a few bash utils were used, notably
+common \textit{unix} programs like \textit{grep}, \textit{cat}, \textit{sed},
+\textit{sort}, \textit{uniq} and, of course, the \textit{bash}.
 
 \section{Number of articles}
 
@@ -282,13 +287,18 @@ example, for the input file tested, the output was the following:
    1610 1
 \end{verbatim}
 
-Meaning that 3579 articles are repeated 2 times and 1610 articles aren't repeated. Totalling to 5189 articles. To check that the program was producing the correct amount of articles the command \verb!ls noticias/post*.html | wc -l! was used.
+Meaning that 3579 articles are repeated 2 times and 1610 articles aren't
+repeated. Totalling to 5189 articles. To check that the program was producing
+the correct amount of articles the command
+\verb!ls noticias/post*.html | wc -l! was used.
 
 \section{Counts of given tag}
 
-The next test run was: obtaining the count of individual tags to see if they match, both in the produced articles, and \texttt{tags.html} file.
+The next test run was: obtaining the count of individual tags to see if they
+match, both in the produced articles, and \texttt{tags.html} file.
 
-To achieve this two commands were used. (As an example the \textit{`regime'} tag was used).
+To achieve this two commands were used. (As an example the \textit{`regime'}
+tag was used).
 
 \begin{figure}[H]
     \inputminted{bash}{./test_count_regime_posts.sh}
@@ -304,11 +314,14 @@ To achieve this two commands were used. (As an example the \textit{`regime'} tag
 
 \section{Count the number of unique tags}
 
-The final test ran was counting the number of unique tags in the input file to see if it matched the number on the \texttt{index.html} file. To achieve this the command on figure~\ref{fig:test_count_unique_tags} was used.
+The final test ran was counting the number of unique tags in the input file to
+see if it matched the number on the \texttt{index.html} file. To achieve this
+the command on figure~\ref{fig:test_count_unique_tags} was used.
 
 \begin{figure}[H]
     \inputminted{bash}{test_count_unique_tags.sh}
-    \caption{Count the number of unique tags in the input file}\label{fig:test_count_unique_tags}
+    \caption{Count the number of unique tags in the input
+    file}\label{fig:test_count_unique_tags}
 \end{figure}
 
 \chapter{Conclusion}
