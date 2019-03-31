@@ -63,32 +63,32 @@ challenges need to be overcome to implement said features.
 
 Next we'll look at the solution, split into the parser's structure, how it was
 split into different sub contexts and what regular expressions were used to
-build it, and the projects architecture where we take a brief look into the
+build it, and the project's architecture where we take a brief look into the
 data structures used.
 
-Finally there will be a mention of the program's performance and how that was
-taken into account during it's development.
+Finally a brief analysis of the programs performance will be presented,
+alongside an interesting finding about performance of regular expressions.
 
 \chapter{Problem}
 
-The requirements the program must fulfil are the following:
+The program must fulfil the following requirements:
 \begin{itemize}
     \item Split the input file into different smaller files, one for each
         article, in a correct HTML DOM tree, as to be read by any ordinary web
-        browser.
+        browser;
     \item Create an index for all the generated files to facilitate access to
-        each of them
+        each of them;
     \item Count the occurrence of each tag and produce a comprehensive summary
-        of them.
-    \item Create a tag $\to$ article association.
+        of them;
+    \item Create a tag $\to$ article association;
     \item Create an article $\to$ tag association.
 \end{itemize}
 
 The input file presents a few challenges that need to be addressed, in order to fulfil the proposed requirements.
 
-The first and most obvious one is the file's size, it's millions of lines long
+The first and most obvious one is the file's size. The file is millions of lines long
 which means that the information parsed needs to be flushed as soon as it's not
-needed anymore as to not risk allocating too much memory.
+needed anymore, as to not risk allocating too much memory.
 
 The second is the publication's format, which in some cases does not lend
 itself to clean regular expressions.
@@ -100,9 +100,9 @@ itself to clean regular expressions.
 
 As can be seen in the example above (Figure~\ref{fig:example_pub_simple}), a
 publication is split in roughly 2 parts, the header, in red, where the post's
-metadata is stored and the body or text of the publication, in green. The first
+metadata is stored, and the body or text of the publication, in green. The first
 area has tags, id and date which are easy to find due to their
-\texttt{\#NAME\{} syntax, but the category and the title (in this example
+\verb!#NAME{! syntax, but the category and the title (in this example
 \textit{``Desporto''} and \textit{``Adpetos de Petro contestam Alexandre
 Grasseli''} respectively) have to be parsed using the rest of the header as
 context. Next, sometimes there is a sequence delimited by square brackets before
@@ -112,9 +112,9 @@ The third problem to be addressed is the fact that most publications
 are repeated throughout the file which can interfere with the counting of the
 number of occurrences of each tag.
 
-Lastly the fourth problem is that \textit{flex} is not unicode aware,
-which means that it reads one byte at a time and since the first byte of the
-horizontal bar is the same as the first byte of many other unicode characters
+Lastly, the fourth problem is that \textit{flex} is not unicode aware,
+which means that it reads one byte at a time, and since the first byte of the
+horizontal bar is the same as the first byte of many other unicode characters,
 they are indistinguishable from \textit{flex}'s perspective. To solve this a
 simple \textit{bash} script (\texttt{clean\_unicode.sh}) was written to replace
 the horizontal bar with a sequence of \verb!#!.
@@ -135,9 +135,9 @@ white are ignored.
 
 \subsection{HEADER}
 
-In the header the id, tags, category and title are parsed. The tags are
+In the header, the id, tags, category and title are parsed. The tags are
 relatively easy to parse, the same goes for the id. To parse the category and
-title a variable is used to know if the category has been parsed, since the
+title, a variable is used to check if the category has been parsed, since the
 same regular expression is used for both.
 
 \subsection{DATE}
@@ -159,13 +159,13 @@ end of the publication.
 
 \begin{figure}[H]
     \input{parser_state_machine.tex}
-    \caption{Parser state machine}
+    \caption{Parser state machine}\label{fig:parser_state_machine}
 \end{figure}
 
-As can be seen, there are two error paths that can be taken from the
-\textit{HEADER} context back to the \textit{INITIAL} context in case the end of
-the header (marked by the sequence of \verb!#!) is reached and no `id' has been
-parsed.
+As shown in Figure~\ref{fig:parser_state_machine}, there are two error paths
+that can be taken from the \textit{HEADER} context back to the \textit{INITIAL}
+context in case the end of the header (marked by the sequence of \verb!#!) is
+reached and no `id' has been parsed.
 
 \section{Project Architecture}
 
@@ -178,21 +178,25 @@ This module gathers the information of a single publication to create the
 corresponding \texttt{post-id.html} file. When a publication is found this
 module is initialized and, as the parser runs, this structure accumulates the
 \texttt{id}, \texttt{title}, \texttt{author\_date}, \texttt{category} and
-\texttt{tags}, then after the header is flushed to the it's file, every sub
-string parsed of the body of the publication is immediately flushed to the file
-as to not accumulate to many bytes in memory.
+\texttt{tags}. After the header is flushed to its file, every sub
+string parsed of the body of the publication is immediately flushed to the file,
+as to not accumulate too many bytes in memory.
 
 \subsection{Newspaper}
 
-This module indexes posts and their tags to create several files. An
-\texttt{index.html} file which references all the parsed posts in a list next
-to their tags. A \texttt{tags.html} file which lists all the tags found next to
-their occurrence count, and finally a \texttt{tagname.hmtl} for every tag
-which lists every file with that tag.
+This module indexes posts and their tags to create several files.
+\begin{itemize}
+    \item \texttt{index.html}: which references all the parsed posts in
+        a list next to their tags;
+    \item \texttt{tags.html}: which lists all the tags found next to
+        their occurrence count;
+    \item \texttt{tagname.hmtl}: for every tag which lists every file with
+        that tag.
+\end{itemize}
 
-To achieve this two tables are kept in memory during the parsing of the whole
+To achieve this, two tables are kept in memory during the parsing of the whole
 input string, one associates post ids with the post's title and tags, the other
-associates tags with their posts. This way the relations shown below can be
+associates tags with their posts. This way, the relations shown below can be
 achieved.
 
 \begin{figure}[H]
@@ -218,12 +222,12 @@ achieved.
 
 \chapter{Performance}
 
-Program performance was a concern during it's implementation. As such for every
-major feature or change made to the program time and memory benchmarks were
+Program performance was a concern during it's implementation. As such, for every
+major feature or change made to the program, time and memory benchmarks were
 ran. With this system it was possible to detect a huge performance increase
 when a simple change of regular expression was made.
 
-One of regular expressions initially used was very slow and incorrect.
+One of the regular expressions initially used was incorrect and exceedingly slow.
 \begin{figure}[H]
     \centering
     \begin{verbatim}
@@ -237,9 +241,9 @@ One of regular expressions initially used was very slow and incorrect.
 
 This was made in an effort to capture accented characters, but because, once
 again, \textit{flex} is not unicode aware, these ranges did not work properly.
-To address this, a different strategy was used, instead of listing what
+To address this, a different strategy was used: instead of listing what
 characters were to be matched, we listed what characters were not to be
-matched:
+matched.
 
 \begin{figure}[H]
     \centering
@@ -249,7 +253,7 @@ matched:
     \caption{Correct regular expression to capture the category and title}\label{fig:new-regex}
 \end{figure}
 
-This change cut 40\% of the programs runtime, (benchmarked from 2.5s to 1.5s)
+This change cut 40\% of the program's runtime, (benchmarked from 2.5s to 1.5s)
 because the list of bytes that had to be compared with was smaller. With the
 added benefit of capturing more precisely titles that had unicode characters,
 such as  ``,  '', --, etc.
@@ -259,7 +263,7 @@ The benchmarks made during the software's development can be seen in Apendix~\re
 
 \chapter{Conclusion}
 
-In conclusion, all the requirements set out in the assignment were fulfilled as
+In conclusion, all the requirements set out in the assignment were fulfilled, as
 well as some extra functionality. The usage of regular expressions to specify
 how certain input strings should be handled proved to be very powerful and time
 saving.
