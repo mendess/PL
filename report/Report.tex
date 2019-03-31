@@ -1,10 +1,17 @@
 \documentclass[a4paper]{report}
 \usepackage[utf8]{inputenc}
 \usepackage{a4wide}
-\usepackage[pdftex,hidelinks]{hyperref}
+\usepackage{hyperref}
+\hypersetup{pdftitle={Processing an Angolan Newspaper},
+pdfauthor={Pedro Mendes},
+colorlinks=true,
+urlcolor=blue,
+linkcolor=black}
 \usepackage{subcaption}
 \usepackage[cache=false]{minted}
 \usepackage{listings}
+\usepackage{booktabs}
+\usepackage{multirow}
 \usepackage{appendix}
 \usepackage{tikz}
 \usetikzlibrary{positioning,automata,decorations.markings}
@@ -21,10 +28,10 @@
         \includegraphics[width=0.4\textwidth]{eng.jpeg}\par\vspace{1cm}
         \vspace{1.5cm}
         \href{https://www.uminho.pt/PT}
-        {\scshape\LARGE Universidade do Minho} \par
+        {\color{black}{\scshape\LARGE Universidade do Minho}} \par
         \vspace{1cm}
         \href{https://www.di.uminho.pt/}
-        {\scshape\Large Departamento de Informática} \par
+        {\color{black}{\scshape\Large Departamento de Informática}} \par
         \vspace{1.5cm}
         \maketitle
     \end{minipage}
@@ -66,7 +73,7 @@ taken into account during it's development.
 
 The requirements the program must fulfil are the following:
 \begin{itemize}
-    \item Separate the input file into different smaller files, one for each
+    \item Split the input file into different smaller files, one for each
         article, in a correct HTML DOM tree, as to be read by any ordinary web
         browser.
     \item Create an index for all the generated files to facilitate access to
@@ -109,7 +116,7 @@ Lastly the fourth problem is that \textit{flex} is not unicode aware,
 which means that it reads one byte at a time and since the first byte of the
 horizontal bar is the same as the first byte of many other unicode characters
 they are indistinguishable from \textit{flex}'s perspective. To solve this a
-simple \textit{bash} script \texttt{clean\_unicode.sh} was written to replace
+simple \textit{bash} script (\texttt{clean\_unicode.sh}) was written to replace
 the horizontal bar with a sequence of \verb!#!.
 
 \chapter{Solution}
@@ -121,7 +128,7 @@ red), \textit{DATE} (in blue), \textit{TEXTHEADER} (in yellow) and
 \textit{TEXT} (in green) (See Figure~\ref{fig:example_pub_colored}), zones in
 white are ignored.
 
-\begin{figure}[H]
+\begin{figure}[h]
     \includegraphics[width=\textwidth]{./example_pub_colored.png}
     \caption{Publication sections breakdown}\label{fig:example_pub_colored}
 \end{figure}
@@ -239,7 +246,7 @@ matched:
     \begin{verbatim}
                         <HEADER>^[^\n#<][^{\n#]+\n
     \end{verbatim}
-    \caption{Correct regular expression to capture the category and title}
+    \caption{Correct regular expression to capture the category and title}\label{fig:new-regex}
 \end{figure}
 
 This change cut 40\% of the programs runtime, (benchmarked from 2.5s to 1.5s)
@@ -247,11 +254,18 @@ because the list of bytes that had to be compared with was smaller. With the
 added benefit of capturing more precisely titles that had unicode characters,
 such as  ``,  '', --, etc.
 
+The benchmarks made during the software's development can be seen in Apendix~\ref{app:benches}.
+
+
 \chapter{Conclusion}
 
 In conclusion, all the requirements set out in the assignment were fulfilled as
-well as some extra functionality. As an extension of this work a \textit{CSS}
-file could be added to improve the visual appeal of the generated pages.
+well as some extra functionality. The usage of regular expressions to specify
+how certain input strings should be handled proved to be very powerful and time
+saving.
+
+As an extension of this work a \textit{CSS} file could be added to
+improve the visual appeal of the generated pages.
 
 \appendix
 
@@ -259,6 +273,37 @@ file could be added to improve the visual appeal of the generated pages.
 
 \lstinputlisting[firstline=20,lastline=55,basicstyle=\footnotesize\ttfamily]
 {../src/main.l}
+
+\chapter{Benchmarks}\label{app:benches}
+\begin{table}[h]
+    \begin{tabular}{l c c c c c}
+        \multirow{2}{*}{Program Version} & \multirow{2}{*}{mean (s)} &
+        \multirow{2}{*}{stddev (s)} & \multicolumn{2}{c}{heap (Mb)} &
+        \multirow{2}{*}{stack peak (Kb)}\\
+
+        &    &    & total & peak & \\\toprule
+
+        Not checking for repeated articles
+        &2.5803&0.0536&44.220  &0.690  &4.800\\
+
+        Add Article $\to$ Tag Relation
+        &2.5413&0.0509&45.390  &1.199  &5.008\\
+
+        Add Index html file
+        &2.5771&0.0460&45.672  &1.199  &5.024\\
+
+        Refactor Regex (Figure~\ref{fig:new-regex})
+        &1.5959&0.0583&44.674  &1.135  &5.008\\
+
+        Add Tag $\to$ Article Relation
+        &2.0040&0.2136&63.731  &1.060  &4.976\\
+
+        Join both Relations
+        &1.9717&0.1553&69.157  &1.848  &4.720\\\bottomrule
+
+    \end{tabular}
+    \caption{The benchmarks taken during the software's development}
+\end{table}
 
 \end{document}
 
