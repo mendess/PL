@@ -23,6 +23,8 @@ static GTree* index = NULL; //Tree<int, pub>
 // Tag <-> [Post id]
 static GTree* tags = NULL; // HashTable<string, HashSet<int>>
 
+static int n_tags = 0;
+
 void newspaper_init()
 {
     index_init();
@@ -33,7 +35,7 @@ Pub newspaper_new_pub(int post_id, const char* title, char** tags, size_t tags_n
 {
     char** new_tags = malloc(sizeof(char*) * tags_num);
     for (size_t i = 0; i < tags_num; i++)
-        new_tags[i] = str_replace(g_strdup(tags[i]), '/', '-');
+        new_tags[i] = str_replace(g_strdup(tags[i]), '/', '=');
     return (Pub) {
         .post_id = post_id,
         .title = g_strdup(title),
@@ -52,8 +54,8 @@ void newspaper_add_publication(Pub pub)
 
 void newspaper_flush()
 {
-    index_flush();
     tags_flush();
+    index_flush();
     tags_delete();
     index_delete();
 }
@@ -124,7 +126,7 @@ void index_flush()
         "  <h3><a href='tags.html'>Tags (%d)</a></h3>\n"
         "  <table>\n"
         "    <tr><th style='border-right: 1px solid #000;'>Titulo</th><th>Tags</th></tr>\n",
-        g_tree_nnodes(tags));
+        n_tags);
     g_tree_foreach(index, flush_entry, index_file);
     fprintf(index_file,
         "  </table>\n"
@@ -182,7 +184,7 @@ static void flush_post(void* /*int*/ post, void* _value, void* /*FILE**/ tag_pos
 
 static void flush_posts(GHashTable* posts, char* tag)
 {
-    str_replace(tag, '/', '-');
+    str_replace(tag, '/', '=');
     char filename[1024];
     sprintf(filename, NEWS_FOLDER TAGS_FOLDER "%s.html", (char*)tag);
     FILE* tag_file = fopen(filename, "w");
@@ -219,6 +221,7 @@ static int flush_tag(void* /*char* */ tag, void* /*GHashTable* */ _posts, void* 
         g_hash_table_size(posts),
         (char*)tag,
         (char*)tag);
+    n_tags++;
     return 0;
 }
 

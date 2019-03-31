@@ -154,7 +154,7 @@ of the body, then immediately switches to the \texttt{TEXT} context.
 \subsection{TEXT}
 
 This context is very simple, it simply writes what it finds to the output file,
-ignoring lines staring with \textit{Etiquetas:} and stopping when it finds the
+ignoring lines starting with \textit{Etiquetas:} and stopping when it finds the
 end of the publication.
 
 \begin{figure}[H]
@@ -254,7 +254,7 @@ matched.
 \end{figure}
 
 This change cut 40\% of the program's runtime, (benchmarked from 2.5s to 1.5s)
-because the list of bytes that had to be compared with was smaller. With the
+because the list of bytes that had to be compared with was smaller, with the
 added benefit of capturing more precisely titles that had unicode characters,
 such as  ``,  '', --, etc.
 
@@ -264,21 +264,52 @@ The benchmarks made during the software's development can be seen in Apendix~\re
 
 To test the correctness of the program, a few bash utils were used, notably common \textit{unix} programs like \textit{grep}, \textit{cat}, \textit{sed}, \textit{sort}, \textit{uniq} and, of course, the \textit{bash}.
 
-% Count the number of times the 'regime' tag comes up in the processed articles
-\verb!cat noticias/*.html | grep -oc '<tag>regime</tag>'!
+\section{Number of articles}
 
-% Count the number of times the 'regime' tag comes up in the original file
-\verb! grep -o 'tag:{regime}' input/folha8.OUT.txt | wc -l!
+To obtain the number of unique articles in the input file the following command
+was used:
+\begin{figure}[H]
+    \inputminted{bash}{./test_number_of_articles.sh}
+    \caption{Count the amount of article repetitions and count the non repeating
+    articles.}
+\end{figure}
 
-% Contagem total distiguindo quantos e que estao repetidos e quantas vezes, e quais os restantes nao repetidos.
-\verb!grep -Po 'post-[0-9]+' input/folha8.OUT.txt | sort | uniq -c | sort -n -r | cut -d' ' -f7 | uniq -c!
+This command outputs the total amount of times articles are repeated, for
+example, for the input file tested, the output was the following:
 
-% Count the number of uniq tags in the tags.html file
-\verb!grep -oP 'tags/[^.]+\.html' noticias/tags.html | sort | uniq | wc -l!
+\begin{verbatim}
+   3579 2
+   1610 1
+\end{verbatim}
 
-% Count the number of uniq tags in the post* files
-\verb!grep -oP 'tags/[^.]+\.html' noticias/post* | awk -F':' '{print $2}' | sort | uniq | wc -l!
+Meaning that 3579 articles are repeated 2 times and 1610 articles aren't repeated. Totalling to 5189 articles. To check that the program was producing the correct amount of articles the command \verb!ls noticias/post*.html | wc -l! was used.
 
+\section{Counts of given tag}
+
+The next test run was: obtaining the count of individual tags to see if they match, both in the produced articles, and \texttt{tags.html} file.
+
+To achieve this two commands were used. (As an example the \textit{`regime'} tag was used).
+
+\begin{figure}[H]
+    \inputminted{bash}{./test_count_regime_posts.sh}
+    \caption{Count the number of times the `regime' tag comes up in the
+    processed articles}
+\end{figure}
+
+\begin{figure}[H]
+    \inputminted{bash}{./test_count_regime_tags.sh}
+    \caption{Show the occurrences of the `regime' tag comes up in the tags.html
+    file}
+\end{figure}
+
+\section{Count the number of unique tags}
+
+The final test ran was counting the number of unique tags in the input file to see if it matched the number on the \texttt{index.html} file. To achieve this the command on figure~\ref{fig:test_count_unique_tags} was used.
+
+\begin{figure}[H]
+    \inputminted{bash}{test_count_unique_tags.sh}
+    \caption{Count the number of unique tags in the input file}\label{fig:test_count_unique_tags}
+\end{figure}
 
 \chapter{Conclusion}
 
