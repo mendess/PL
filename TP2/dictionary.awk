@@ -16,18 +16,18 @@ END {
         for(lema in dict[word]) {
             lema_escaped = lema
             gsub("\"", "\\\"", lema_escaped)
-            print "\t\t\t\t\t{\""lema_escaped"\": ["
+            print "\t\t\t\t\t\t{\""lema_escaped"\": ["
             for(p in dict[word][lema]) { n_pos++ }
             for(pos in dict[word][lema]) {
                 if(n_pos == 1) {
-                    print "\t\t\t\t\t\t\""pos"\""
+                    print "\t\t\t\t\t\t\t\""pos"\""
                 } else {
-                    print "\t\t\t\t\t\t\""pos"\","
+                    print "\t\t\t\t\t\t\t\""pos"\","
                 }
                 n_pos--
             }
             if(n_lemas == 1){
-                print "\t\t\t\t\t]}"
+                print "\t\t\t\t\t\t]}"
             } else {
                 print "\t\t\t\t\t]},"
             }
