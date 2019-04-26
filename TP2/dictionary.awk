@@ -1,6 +1,6 @@
 #!/bin/gawk -f
 BEGIN { FS = "\t" }
-$0 !~ /^</ { dict[$1][$4][$5]++ }
+$0 !~ /^</ { dict[$4][$1][$5]++ }
 END {
     print "{"
     print "\t\"dictionary\": {"
