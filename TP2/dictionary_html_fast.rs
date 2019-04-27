@@ -55,6 +55,7 @@ fn main() -> io::Result<()> {
     writeln!(idx, "</head>")?;
     writeln!(idx, "<body>")?;
     writeln!(idx, "  <h1>Dicionario</h1>")?;
+    writeln!(idx, "  <h2>{} palavras</h2>", dict.words.len())?;
     writeln!(idx, "  <table>")?;
     writeln!(idx, "    <tr>")?;
     for c in "ABCDEFGHIJKLMNOPQRSTUVWXYZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÑÒÓÔÕÖØÙÚÛÜÝ".chars() {

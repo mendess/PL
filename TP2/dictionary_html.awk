@@ -9,6 +9,8 @@ END {
     print "</head>" >> idx
     print "<body>" >> idx
     print "  <h1>Dicionario</h1>" >> idx
+    for(word in dict) { count++ }
+    print "  <h2>"count" palavras</h2>" >> idx
     print "  <table>" >> idx
     print "    <tr>" >> idx
     split("ABCDEFGHIJKLMNOPQRSTUVWXYZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÑÒÓÔÕÖØÙÚÛÜÝ", chars, "")
