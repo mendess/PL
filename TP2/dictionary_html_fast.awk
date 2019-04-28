@@ -1,4 +1,4 @@
-#!/bin/gawk -f
+#!/usr/bin/gawk -f
 BEGIN {
     FS = "\t"
     system("mkfifo pipe")

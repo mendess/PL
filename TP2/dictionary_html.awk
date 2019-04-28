@@ -1,4 +1,4 @@
-#!/bin/gawk -f
+#!/usr/bin/gawk -f
 BEGIN { FS = "\t" }
 $0 !~ /^</ && $4 !~ /[0-9¡ª´¹º©«».,&?;:'"{}=_~|`!@#$%^*()+\-\/\[\]\\]/ {
     word = toupper(substr($4, 1, 1)) substr($4, 2)

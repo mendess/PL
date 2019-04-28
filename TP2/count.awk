@@ -1,4 +1,4 @@
-#!/bin/awk -f
+#!/usr/bin/gawk -f
 BEGIN { FS="\t" }
 $1 == "<s>" { s++ }
 $1 ~ /<p[^>]*>/ { p++ }
