@@ -60,3 +60,6 @@ input
 *.aux
 *.log
 Report.pdf
+*.html
+*.bbl
+*.blg
