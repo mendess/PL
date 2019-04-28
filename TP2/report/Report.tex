@@ -1,0 +1,263 @@
+\documentclass[a4paper]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{a4wide}
+\usepackage{hyperref}
+\hypersetup{pdftitle={Processing an Angolan Newspaper},
+pdfauthor={Pedro Mendes},
+colorlinks=true,
+urlcolor=blue,
+linkcolor=black}
+\usepackage{subcaption}
+\usepackage[cache=false]{minted}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{appendix}
+\usepackage{tikz}
+\usetikzlibrary{positioning,automata,decorations.markings}
+
+\begin{document}
+
+\title{Processing the CETEMPublico's corpus}
+\author{Pedro Mendes (a79003)}
+\date{\today}
+
+\begin{center}
+    \begin{minipage}{0.75\linewidth}
+        \centering
+        \includegraphics[width=0.4\textwidth]{eng.jpeg}\par\vspace{1cm}
+        \vspace{1.5cm}
+        \href{https://www.uminho.pt/PT}
+        {\color{black}{\scshape\LARGE Universidade do Minho}} \par
+        \vspace{1cm}
+        \href{https://www.di.uminho.pt/}
+        {\color{black}{\scshape\Large Departamento de Informática}} \par
+        \vspace{1.5cm}
+        \maketitle
+    \end{minipage}
+\end{center}
+
+\begin{abstract}
+    \begin{center}
+        This project's goal is to analyse the \textit{CETEMPublico}'s corpus,
+        compiled from publications of the \textit{Publico}
+        newspaper~\cite{CETEMPublico}. This document's purpose is to assist
+        researchers in the development of software that needs to process the
+        Portuguese language, as well as, anyone studying the Portuguese
+        language.
+
+        Simple examples of such processing are demonstrated in this paper.
+    \end{center}
+\end{abstract}
+
+\tableofcontents
+
+\pagebreak
+
+\chapter{Introduction}
+
+This project aims to parse the \textit{CETEMPublico}'s corpus to produce some
+statistics using the \textit{gawk} programming language. \textit{Gawk} is a
+domain specific language designed for parsing CSV and CSV-like files making it
+a very competent choice for the proposed problem, it does have it's
+limitations, as will be shown in the on the last chapter.
+
+First we'll analyse the problem, see what needs to be implemented and what
+challenges need to be overcome to implement said features.
+
+Next we'll look at the solutions to the proposed problems, dedicating a
+section to the solution of each problem.
+
+\chapter{Problem}
+
+The following analysis must be made:
+\begin{itemize}
+    \item Count the number of sentences, paragraphs, extracts and
+        multi word expressions.
+    \item Find and count the multi word expressions (MWE).
+    \item Find and count the verbs.
+    \item Build the implicit dictionary in the corpus.
+\end{itemize}
+
+The input file uses XML tags to annotate it's contents, therefore the gawk
+scripts will have to look for these during parsing.
+
+Multi Word Expressions span more then one line, thus the line based parsing
+will have to be adapted.
+
+As is usual with these kinds of file processing tasks, the input is millions of
+lines long which means that care must be taken to not accumulate too much data
+in program memory.
+
+\chapter{Solution}
+
+\section{Requirement 1: Counting}\label{sec:count}
+
+The first requirement is relatively simple, the corpus contains a tag for each
+of the items that need to be counted, therefore my job was simply to count
+these tags.
+
+\begin{figure}[H]
+    \centering
+    \RecustomVerbatimEnvironment{Verbatim}{BVerbatim}{}
+    \inputminted[firstline=2]{awk}{../count.awk}
+    \caption{\textbf{count.awk:} Gawk script to count sentences, paragraphs,
+    extracts and MWE}\label{code:count}
+\end{figure}
+
+As demonstrated in Figure~\ref{code:count} each tag has a distinct regular
+expression to capture it which maps to a simple counting action. At the end the
+program simply prints the number of occurrences of each tag.
+
+\section{Requirement 2: Multi Word Expressions}\label{sec:mwe}
+
+The second requirement entails counting the MWEs in the file. Because each MWE
+uses more than one line there needs to be a variable tracking the context the
+parser is in.
+
+\begin{figure}[H]
+    \centering
+    \RecustomVerbatimEnvironment{Verbatim}{BVerbatim}{}
+    \inputminted[firstline=2]{awk}{../mwe.awk}
+    \caption{\textbf{mwe.awk:} Gawk script to find and count MWEs}
+\end{figure}
+
+As can be seen the \texttt{mwe} variable tracks whether the parser is inside a
+MWE\@. In addition to this, the \texttt{current} variable accumulates the MWE
+to be stored in the \texttt{expressions} associative array for counting. The
+script finishes by printing every expression along with it's occurrence count.
+
+\section{Requirement 3: Verbs}\label{sec:verbs}
+
+Verbs in the corpus are distinguished by the fifth column, if it's value starts
+with a \texttt{V} then the associated word is a verb. Afterwords the script
+stores the field in the forth column since this is the verb in it's infinitive
+form, as opposed to the conjugated form that is in the first field.
+
+\begin{figure}[H]
+    \centering
+    \RecustomVerbatimEnvironment{Verbatim}{BVerbatim}{}
+    \inputminted[firstline=2]{awk}{../verbs.awk}
+    \caption{\textbf{verbs.awk:} Gawk script to find and count all verbs in
+    their infinitive form}
+\end{figure}
+
+The script finishes by printing out all the verbs and their occurrences.
+
+\section{Requirement 4: Dictionary}\label{ssec:dictionary}
+
+A dictionary in this context is list of words group with their lemmas. The
+lemmas, on the other hand, have associated with them their respective part of
+speech.
+
+\begin{figure}[H]
+    \centering
+    \RecustomVerbatimEnvironment{Verbatim}{BVerbatim}{}
+    \inputminted[firstline=3,lastline=6]{awk}{../dictionary_json.awk}
+    \caption{Excerpt of a gawk script to filter and store valid
+    words}\label{code:dictionary}
+\end{figure}
+
+The script used uses a single filter to obtain all the valid words (see
+Figure~\ref{code:dictionary}). This filter will first remove lines started by
+XML tags, and second filter any words that include punctuation, numbers, and
+other non-letter symbols. Then in the action part of this filter the first
+letter is capitalized and inserted into the dictionary associating the lemma
+found (\texttt{\$1}) and the lemma's part of speech (\texttt{\$5}).
+
+For the \texttt{END} action, there are two versions of the script: One that
+outputs a JSON string and one that creates a series of html files to make
+browsing the dictionary easier.
+
+\subsection{JSON}\label{ssec:dict-json}
+
+The JSON string output by this script groups words with their lemmas and the
+lemmas with their parts of speech. It aims to be more or less direct
+translation of the way they are stored in memory (see
+Figure~\ref{code:dictionary}).
+
+In the example in Figure~\ref{out:json} we can see represented an object
+containing a dictionary which contains a words field with the list of words,
+each one containing a list of lemmas. Each lemma with a list of parts of speech
+it was found in. This is a more or less direct translation of the way the
+dictionary is stored in memory.
+
+\begin{figure}[H]
+    \centering
+    \RecustomVerbatimEnvironment{Verbatim}{BVerbatim}{}
+    \inputminted{json}{./dictJson.tex}
+    \caption{Excerpt of the output JSON string}\label{out:json}
+\end{figure}
+
+\subsection{HTML}\label{ssec:dict-html}
+
+The second version of the script outputs the dictionary to html files with the
+following organization. An \textit{index.html} file that lists all the words in
+the dictionary as links to other \textit{word.html} files that list the
+different lemmas and their parts of speech.
+
+The list in the index file is ordered alphabetically and includes links at the
+top to jump the different letters of the alphabet.
+
+This implementation, however, is very slow due to the sorting used by
+\textit{gawk} not being intended for use case. For example, to process the
+largest file provided the script takes 40 minutes to complete. To solve this
+issue a implementation of the sorting and generation of the html files was made
+in \href{https://www.rust-lang.org/}{Rust} a system's programming language that
+has performance comparable to that of \textit{C} and \textit{C++}. With this
+the time it takes to process the largest file provided was cut to 30 seconds.
+
+To achieve this the \textit{gawk} script opens a named pipe and then starts the
+Rust program in the background, setting it up to read from the pipe, afterwords
+it simply writes the filtered and valid words to the pipe. On the other side,
+the Rust code is very similar to the previous, \textit{gawk} only code, keeping
+the same data structure, only using a binary tree to store the words instead of
+an associative array.
+
+Both versions of the program were kept for evaluation purposes.
+
+\begin{figure}[H]
+    \centering
+    \RecustomVerbatimEnvironment{Verbatim}{BVerbatim}{}
+    \inputminted[firstline=2]{awk}{../dictionary_html_fast.awk}
+    \caption{\textbf{dictionary\_html\_fast.awk:} Gawk script to build a
+    dictionary out of the corpus, using a second program to process the
+    filtered words}\label{code:count}
+\end{figure}
+
+\chapter{Listing of the produced files}
+
+\begin{itemize}
+    \item \textbf{count.awk} Explained in Section~\ref{sec:count}
+    \item \textbf{mwe.awk} Explained in Section~\ref{sec:mwe}
+    \item \textbf{verbs.awk} Explained in Section~\ref{sec:verbs}
+    \item \textbf{dictionary\_json.awk} Explained in
+        Subsection~\ref{ssec:dict-json}
+    \item \textbf{dictionary\_html.awk} and \textbf{dictionary\_html\_fast.awk}
+        Explained in Subsection~\ref{ssec:dict-html}
+\end{itemize}
+
+\chapter{Conclusion}
+
+In conclusion, \textit{gawk} is a very powerful tool for filtering and
+reorganizing text that gets a lot of work done in very few lines of code. On
+the other hand it is not intended for complex data processing and
+reorganization. Because of this it is my opinion that when using it one has to
+know it's limits or risk wasting more time then needed.
+
+The tool also fits incredibly well with the rest of the Unix system ecosystem,
+reading from the standard input by default and writing to the standard output,
+it can be used to process in conjunction with other common tools through the
+use of pipes.
+
+In regards to the work done in this assignment, most tasks were relatively easy
+to complete due to \textit{gawk}'s powerful syntax, only ever falling short on
+the aforementioned performance and complex processing, which the tool was
+never meant to be used for in the first place.
+
+\bibliographystyle{plain}
+\bibliography{Report}
+
+\end{document}
+
