@@ -63,3 +63,5 @@ Report.pdf
 *.html
 *.bbl
 *.blg
+target/
+y.tab.h
