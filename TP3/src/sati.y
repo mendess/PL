@@ -8,7 +8,7 @@ void yyerror(char *s);
 %}
 %union { char* str; }
 %token <str> ID
-%type <str> Wd Synonym Meaning EnglishName Dicl Word Synonyms
+%type <str> Wd Synonym Meaning EnglishName Dicl Word Synonyms Text
 %%
 Sati : Dicl '%' '%' Texts
      ;
@@ -26,23 +26,23 @@ Synonyms : Synonym ','
          | Synonyms Synonym
          ;
 
-Synonym : ID               { sati_add_synonym($1); }
+Synonym : ID                       { sati_add_synonym($1); }
         ;
 
-Meaning : ID               { sati_add_meaning($1); }
+Meaning : ID                       { sati_add_meaning($1); }
         ;
 
-EnglishName : ID           { sati_add_english_name($1); }
+EnglishName : ID                   { sati_add_english_name($1); }
             ;
 
-Wd : ID                    { sati_add_word($1); }
+Wd : ID                            { sati_add_word($1); }
    ;
 
 Texts : '"' Text '"'
       | Texts '"' Text '"'
       ;
 
-Text : ID
+Text : ID                          { sati_parse_text($1); }
      ;
 %%
 

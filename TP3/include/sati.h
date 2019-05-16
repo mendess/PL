@@ -21,4 +21,6 @@ void sati_add_synonym(const char* synonym);
 
 void sati_dump();
 
+void sati_parse_text(const char*);
+
 #endif // SATI_H

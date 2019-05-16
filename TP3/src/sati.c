@@ -80,6 +80,10 @@ void sati_dump()
     }
 }
 
+void sati_parse_text(const char* text) {
+    printf("{{%s}}\n", text);
+}
+
 void word_free(Word* word)
 {
     free(word->wd);

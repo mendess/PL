@@ -39,12 +39,12 @@ __lex: $(SOURCES_DIR)/sati.l
 
 $(GIC_OBJ_R): $(SOURCES_DIR)/sati.y __lex __include_dir
 	@mkdir -p $(T_GIC)
-	yacc -o $(GIC_OUT) --defines=$(HEADERS)/y.tab.h $<
+	yacc $< -o $(GIC_OUT) --defines=$(HEADERS)/y.tab.h
 	cc $(OPTIMISE) -I$(HEADERS) -I$(T_GIC) -c $(GIC_OUT) -o $(GIC_OBJ_R)
 
 $(GIC_OBJ_D): $(SOURCES_DIR)/sati.y __lex __include_dir
 	@mkdir -p $(T_GIC)
-	yacc -o $(GIC_OUT) --defines=$(HEADERS)/y.tab.h $<
+	yacc $< -o $(GIC_OUT) --defines=$(HEADERS)/y.tab.h
 	cc $(DEBUG) -I$(HEADERS) -c $(GIC_OUT) -o $(GIC_OBJ_D)
 
 # DIRECTORIES
