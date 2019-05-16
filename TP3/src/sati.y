@@ -4,20 +4,21 @@ void yyerror(char *s);
 #define __GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
+#include "sati.h"
 %}
 %union { char* str; }
 %token <str> ID
-%type <str> Wd Synonym Meaning EnglishName Text Dicl Texts Word
+%type <str> Wd Synonym Meaning EnglishName Dicl Word Synonyms
 %%
-Sati : Dicl '%' '%' Texts { printf("%%%%\n"); }
+Sati : Dicl '%' '%' Texts
      ;
 
-Dicl : Word          { $$=$1; printf("Dicl: Word (%s)\n", $$); }
-     | Dicl Word     { asprintf(&$$, "%s%s", $1, $2); printf("Dicl | Dicl Word: (%s)\n", $$); }
+Dicl : Word
+     | Dicl Word
      ;
 
 Word : Wd ':' Meaning '|' EnglishName '|' '[' Synonyms ']' ';'
-     | Wd ':' Meaning '|' EnglishName '|' Synonym ';'  { asprintf(&$$, "Word: %s | %s | %s | %s ;", $1, $3, $5, $7); printf("%s\n", $$); }
+     | Wd ':' Meaning '|' EnglishName '|' Synonym ';'
      ;
 
 Synonyms : Synonym ','
@@ -25,24 +26,23 @@ Synonyms : Synonym ','
          | Synonyms Synonym
          ;
 
-Synonym : ID                  { printf("Synonym: (%s)\n", $1); $$=$1; }
+Synonym : ID               { sati_add_synonym($1); }
         ;
 
-Meaning : ID                  { printf("Meaning: (%s)\n", $1); $$=$1; }
+Meaning : ID               { sati_add_meaning($1); }
         ;
 
-EnglishName : ID              { printf("EnglishName: (%s)\n", $1); $$=$1; }
+EnglishName : ID           { sati_add_english_name($1); }
             ;
 
-Wd : ID                       { printf("Wd: (%s)\n", $1); $$=$1; }
+Wd : ID                    { sati_add_word($1); }
    ;
 
-
-Texts : '"' Text '"'          { $$=$2; }
-      | Texts '"' Text '"'    { asprintf(&$$, "%s%s", $1, $3); }
+Texts : '"' Text '"'
+      | Texts '"' Text '"'
       ;
 
-Text : ID                     { printf("Text: (%s)\n", $1); $$=$1; }
+Text : ID
      ;
 %%
 
@@ -53,7 +53,9 @@ void yyerror(char* s) {
 }
 
 int main() {
+    sati_new();
     yyparse();
+    sati_dump();
     return 0;
 }
 
