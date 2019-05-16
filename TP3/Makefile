@@ -66,4 +66,3 @@ clean:
 	rm -rf $(T_RELEASE)
 	rm -rf $(T_DEBUG)
 	rm -rf $(T_GIC)
-	rm -f $(EXE)
