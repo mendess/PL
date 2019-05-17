@@ -1,8 +1,6 @@
 #ifndef SATI_H
 #define SATI_H
 
-#include "string_vec.h"
-
 typedef enum sati_error {
     OK = 0,
     NO_CURRENT_WORD = 1,

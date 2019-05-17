@@ -7,5 +7,5 @@ edition = "2018"
 [lib]
 name = "sati"
 path = "src/sati.rs"
-crate-type = ["dylib"]
+crate-type = ["staticlib"]
 

@@ -28,13 +28,13 @@ EXE=sati
 
 # COMPILING
 release: __release_dir __output_dir $(GIC_OBJ_R) $(OBJECTS) target/release/libsati.$(EXT)
-	cc $(OPTIMISE) $(CFLAGS) $(OBJECTS) $(GIC_OBJ_R) -I$(HEADERS) -L ./target/release/ -lsati -o $(T_RELEASE)/$(EXE)
+	cc $(OPTIMISE) $(CFLAGS) $(OBJECTS) $(GIC_OBJ_R) -I$(HEADERS) target/release/libsati.a -lpthread -ldl -o $(T_RELEASE)/$(EXE)
 
 $(OBJECTS): $(T_RELEASE)/%.o : $(SOURCES_DIR)/%.c
 	cc $(OPTIMISE) $(CFLAGS) -I$(HEADERS) -c $< -o $@
 
 debug: __debug_dir __output_dir $(GIC_OBJ_D) $(DEBUG_OBJECTS) target/debug/libsati.$(EXT)
-	cc $(DEBUG) $(CFLAGS) $(DEBUG_OBJECTS) $(GIC_OBJ_D) -I$(HEADERS) -L ./target/debug/ -lsati -o $(T_DEBUG)/$(EXE)
+	cc $(DEBUG) $(CFLAGS) $(DEBUG_OBJECTS) $(GIC_OBJ_D) -I$(HEADERS) target/debug/libsati.a -lpthread -ldl -o $(T_DEBUG)/$(EXE)
 
 $(DEBUG_OBJECTS): $(T_DEBUG)/%.o : $(SOURCES_DIR)/%.c
 	cc $(DEBUG) $(CFLAGS) -I$(HEADERS) -c $< -o $@

@@ -2,9 +2,10 @@
 int yylex();
 void yyerror(char *s);
 #define __GNU_SOURCE
+#include "sati.h"
 #include <stdio.h>
 #include <string.h>
-#include "sati.h"
+#include <stdlib.h>
 extern int yylineno;
 void add_synonym(const char*);
 void add_meaning(const char*);
