@@ -65,3 +65,6 @@ Report.pdf
 *.blg
 target/
 y.tab.h
+/target
+**/*.rs.bk
+Cargo.lock

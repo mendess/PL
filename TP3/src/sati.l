@@ -5,7 +5,7 @@
 #include <string.h>
 char* strdup(const char*);
 %}
-
+%option yylineno
 %%
 [^\n %;,"\[\]:|][^%;,"\[\]:|]*[^\n %;,"\[\]:|]  { yylval.str = strdup(yytext); return ID; }
 [%;,"\[\]:|]                                    { return yytext[0]; }

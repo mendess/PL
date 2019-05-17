@@ -1,7 +1,13 @@
 #FLAGS
 OPTIMISE=-O2
-CFLAGS=--std=c11 -pedantic -W -Wall -Wextra `pkg-config --cflags --libs glib-2.0`
+CFLAGS=--std=c11 -pedantic -W -Wall -Wextra
 DEBUG=-g
+
+ifeq ($(shell uname),Darwin)
+    EXT := dylib
+else
+    EXT := so
+endif
 
 #DIRECTORIES
 T_RELEASE=target/release
@@ -21,14 +27,14 @@ DEBUG_OBJECTS=$(patsubst $(SOURCES_DIR)/%.c,$(T_DEBUG)/%.o,$(SOURCES))
 EXE=sati
 
 # COMPILING
-release: __release_dir __output_dir $(GIC_OBJ_R) $(OBJECTS)
-	cc $(OPTIMISE) $(CFLAGS) $(OBJECTS) $(GIC_OBJ_R) -I$(HEADERS) -o $(T_RELEASE)/$(EXE)
+release: __release_dir __output_dir $(GIC_OBJ_R) $(OBJECTS) target/release/libsati.$(EXT)
+	cc $(OPTIMISE) $(CFLAGS) $(OBJECTS) $(GIC_OBJ_R) -I$(HEADERS) -L ./target/release/ -lsati -o $(T_RELEASE)/$(EXE)
 
 $(OBJECTS): $(T_RELEASE)/%.o : $(SOURCES_DIR)/%.c
 	cc $(OPTIMISE) $(CFLAGS) -I$(HEADERS) -c $< -o $@
 
-debug: __debug_dir __output_dir $(GIC_OBJ_D) $(DEBUG_OBJECTS)
-	cc $(DEBUG) $(CFLAGS) $(DEBUG_OBJECTS) $(GIC_OBJ_D) -I$(HEADERS) -o $(T_DEBUG)/$(EXE)
+debug: __debug_dir __output_dir $(GIC_OBJ_D) $(DEBUG_OBJECTS) target/debug/libsati.$(EXT)
+	cc $(DEBUG) $(CFLAGS) $(DEBUG_OBJECTS) $(GIC_OBJ_D) -I$(HEADERS) -L ./target/debug/ -lsati -o $(T_DEBUG)/$(EXE)
 
 $(DEBUG_OBJECTS): $(T_DEBUG)/%.o : $(SOURCES_DIR)/%.c
 	cc $(DEBUG) $(CFLAGS) -I$(HEADERS) -c $< -o $@
@@ -46,6 +52,12 @@ $(GIC_OBJ_D): $(SOURCES_DIR)/sati.y __lex __include_dir
 	@mkdir -p $(T_GIC)
 	yacc $< -o $(GIC_OUT) --defines=$(HEADERS)/y.tab.h
 	cc $(DEBUG) -I$(HEADERS) -c $(GIC_OUT) -o $(GIC_OBJ_D)
+
+target/release/libsati.$(EXT): src/sati.rs Cargo.toml
+	cargo build --release
+
+target/debug/libsati.$(EXT): src/sati.rs Cargo.toml
+	cargo build --release
 
 # DIRECTORIES
 
@@ -66,3 +78,4 @@ clean:
 	rm -rf $(T_RELEASE)
 	rm -rf $(T_DEBUG)
 	rm -rf $(T_GIC)
+	cargo clean

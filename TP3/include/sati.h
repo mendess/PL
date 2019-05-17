@@ -5,19 +5,19 @@
 
 typedef enum sati_error {
     OK = 0,
-    MEANING_ALREADY_DEFINED = 1,
-    ENGLISH_NAME_ALREADY_DEFINED = 2,
+    NO_CURRENT_WORD = 1,
+    WORD_ALREADY_DEFINED = 2,
+    MEANING_ALREADY_DEFINED = 3,
+    ENGLISH_NAME_ALREADY_DEFINED = 4,
 } SATI_ERROR;
 
-void sati_new();
-
-void sati_add_word(const char* word);
+SATI_ERROR sati_add_word(const char* word);
 
 SATI_ERROR sati_add_meaning(const char* meaning);
 
 SATI_ERROR sati_add_english_name(const char* english_name);
 
-void sati_add_synonym(const char* synonym);
+SATI_ERROR sati_add_synonym(const char* synonym);
 
 void sati_dump();
 

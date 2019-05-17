@@ -1,0 +1,11 @@
+[package]
+name = "sati"
+version = "0.1.0"
+authors = ["Mendess2526 <pedro.mendes.26@gmail.com>"]
+edition = "2018"
+
+[lib]
+name = "sati"
+path = "src/sati.rs"
+crate-type = ["dylib"]
+
