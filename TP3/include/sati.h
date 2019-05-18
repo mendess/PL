@@ -7,7 +7,10 @@ typedef enum sati_error {
     WORD_ALREADY_DEFINED = 2,
     MEANING_ALREADY_DEFINED = 3,
     ENGLISH_NAME_ALREADY_DEFINED = 4,
+    FILE_NOT_FOUND = 5
 } SATI_ERROR;
+
+SATI_ERROR sati_set_output(const char*);
 
 void sati_start();
 

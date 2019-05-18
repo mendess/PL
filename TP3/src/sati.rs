@@ -1,6 +1,9 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ffi::CStr;
+use std::fs::File;
+use std::io::stdout;
+use std::io::Write;
 use std::os::raw::c_char;
 use std::os::raw::c_int;
 use std::thread_local;
@@ -22,6 +25,19 @@ pub enum SatiError {
     WordAlreadyDefined = 2,
     MeaningAlreadyDefined = 3,
     EnglishNameAlreadyDefined = 4,
+    FileNotFound = 5,
+}
+
+pub struct Config {
+    output: Box<dyn Write>,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Config {
+            output: Box::new(stdout()),
+        }
+    }
 }
 
 thread_local!(
@@ -29,17 +45,28 @@ thread_local!(
         database: HashMap::new(),
         current_word: None,
     });
+    static CONFIG: RefCell<Config> = RefCell::new(Config::default());
 );
 
 #[no_mangle]
+pub extern "C" fn sati_set_output(file: *const c_char) -> c_int {
+    let file = match File::create(c_char_to_string(file)) {
+        Ok(f) => f,
+        Err(_) => return SatiError::FileNotFound as c_int,
+    };
+    CONFIG.with(|c| c.borrow_mut().output = Box::new(file));
+    0
+}
+
+#[no_mangle]
 pub extern "C" fn sati_start() {
-    println!(r#"\documentclass[a4paper]{{report}}"#);
-    println!(r#"\begin{{document}}"#);
+    let header = include_str!("../assets/template.tex");
+    CONFIG.with(|c| writeln!(c.borrow_mut().output, "{}", header).unwrap());
 }
 
 #[no_mangle]
 pub extern "C" fn sati_end() {
-    println!(r#"\end{{document}}"#);
+    CONFIG.with(|c| writeln!(c.borrow_mut().output, r#"\end{{document}}"#).unwrap());
 }
 
 #[no_mangle]
@@ -157,25 +184,26 @@ impl Sati {
             })
             .collect::<Vec<_>>()
             .join(" ");
-        println!("\\chapter{{{}}}\n{}", title, text);
+        CONFIG
+            .with(|c| writeln!(c.borrow_mut().output, "\\chapter{{{}}}\n{}", title, text).unwrap());
     }
 
     fn dump(&self) {
         for v in self.database.values() {
-            println!(
+            eprintln!(
                 "{} : {}",
                 v.wd,
                 v.meaning.as_ref().unwrap_or(&"\"\"".to_string())
             );
-            println!(
+            eprintln!(
                 "\t| {}",
                 v.english_name.as_ref().unwrap_or(&"\"\"".to_string())
             );
-            print!("\t| [");
+            eprint!("\t| [");
             for syn in v.synonyms.iter() {
-                print!(" {}, ", syn);
+                eprint!(" {}, ", syn);
             }
-            println!("]");
+            eprintln!("]");
         }
     }
 }

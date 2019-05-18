@@ -84,6 +84,13 @@ void test_errors(SATI_ERROR e, const char * word) {
         case ENGLISH_NAME_ALREADY_DEFINED:
             yyerror("English name already addded");
             exit(1);
+        case FILE_NOT_FOUND: {
+            char msg[1024];
+            snprintf(msg, 1024, "Couldn't open '%s' for writing", word);
+            yyerror(msg);
+            exit(1);
+        }
+
         default: return;
     }
 }
@@ -104,7 +111,10 @@ void add_word(const char* s) {
     test_errors(sati_add_word(s), s);
 }
 
-int main() {
+int main(int argc, char** argv) {
+    if(argc > 1) {
+        test_errors(sati_set_output(argv[1]), argv[1]);
+    }
     sati_start();
     yyparse();
     sati_end();
