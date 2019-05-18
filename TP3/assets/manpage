@@ -1,0 +1,65 @@
+.TH sati 1 "May 2019" "version 1.0"
+
+.SH NAME
+sati - Sistema de Anotacao de Textos de Informatica
+
+.SH SYNOPSIS
+sati [
+.I OPTION...
+]
+
+.SH DESCRIPTION
+The
+.B sati
+utility receives input in the sati language and produces latex based documents
+based on it's input.
+
+By default
+.B sati
+reads from standard input and writes to standard output, but this behaviour can
+be overriden by some options.
+
+.SH OPTIONS
+The following options are suported
+
+.B -i | --input
+.I filename
+
+    Read from
+.I filename
+instead of standard input.
+
+.B -o | --output
+.I filename
+
+    Write to
+.I filename
+instead of standard output.
+
+.B -s | --split
+
+    Write each text to a diferent file. Usefull when dealing with a very large input.
+
+.SH STDIN
+Used for reading the input (unless stated otherwise by an option)
+
+.SH STDOUT
+Used for outputing the latex document. (unless stated otherwise by an option)
+
+.SH STDERR
+Used to comunicate errors to the user.
+
+.SH OUTPUT FILES
+Either the file specified with the
+.B -o
+option or one file for each text (if the
+.B -s
+option is passed) whose name is either the text title or 'Untitled_X.tex',
+where 'X' is an unique number.
+
+.SH SEE ALSO
+.B pdflatex
+(1)
+
+.SH AUTHOR
+Pedro Mendes
