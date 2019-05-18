@@ -32,6 +32,17 @@ thread_local!(
 );
 
 #[no_mangle]
+pub extern "C" fn sati_start() {
+    println!(r#"\documentclass[a4paper]{{report}}"#);
+    println!(r#"\begin{{document}}"#);
+}
+
+#[no_mangle]
+pub extern "C" fn sati_end() {
+    println!(r#"\end{{document}}"#);
+}
+
+#[no_mangle]
 pub extern "C" fn sati_add_word(word: *const c_char) -> c_int {
     let word = c_char_to_string(word);
     INSTANCE
@@ -68,9 +79,13 @@ pub extern "C" fn sati_add_synonym(word: *const c_char) -> c_int {
 }
 
 #[no_mangle]
-pub extern "C" fn sati_parse_text(text: *const c_char) {
+pub extern "C" fn sati_parse_text(title: *const c_char, text: *const c_char) {
+    let title = match c_char_to_string(title) {
+        ref x if x.is_empty() => String::from("Untitled"),
+        s => s,
+    };
     let text = c_char_to_string(text);
-    INSTANCE.with(|s| s.borrow().parse_text(text));
+    INSTANCE.with(|s| s.borrow().parse_text(title, text));
 }
 
 #[no_mangle]
@@ -93,8 +108,9 @@ impl Sati {
             Err(SatiError::WordAlreadyDefined)
         } else {
             let w = Word::new(word);
-            self.current_word = Some(w.wd.clone());
-            self.database.insert(w.wd.clone(), w);
+            let key = w.wd.to_uppercase();
+            self.current_word = Some(key.clone());
+            self.database.insert(key, w);
             Ok(())
         }
     }
@@ -126,8 +142,22 @@ impl Sati {
         Ok(())
     }
 
-    fn parse_text(&self, text: String) {
-        println!("(({}))", text);
+    fn parse_text(&self, title: String, text: String) {
+        let text = text
+            .split(' ')
+            .map(|x| {
+                match self.database.get(
+                    x.to_uppercase()
+                        .trim_start_matches(|c: char| !c.is_alphanumeric())
+                        .trim_end_matches(|c: char| !c.is_alphanumeric()),
+                ) {
+                    Some(w) => format!("{}{}", x, w.to_footnote()),
+                    None => x.to_string(),
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(" ");
+        println!("\\chapter{{{}}}\n{}", title, text);
     }
 
     fn dump(&self) {
@@ -158,5 +188,15 @@ impl Word {
             english_name: None,
             synonyms: vec![],
         }
+    }
+
+    fn to_footnote(&self) -> String {
+        format!(
+            "\\footnote{{\\textbf{{{}}}: Meaining: {}, English Name: {}, Synonyms: {:?}}}",
+            self.wd,
+            self.meaning.as_ref().unwrap(),
+            self.english_name.as_ref().unwrap(),
+            self.synonyms
+        )
     }
 }

@@ -6,10 +6,13 @@
 char* strdup(const char*);
 %}
 %option yylineno
+%x TEXTS
 %%
 [^\n %;,"\[\]:|][^%;,"\[\]:|]*[^\n %;,"\[\]:|]  { yylval.str = strdup(yytext); return ID; }
-[%;,"\[\]:|]                                    { return yytext[0]; }
-.|\n                                            { ; }
+(%)+                                            { BEGIN TEXTS; return yytext[0]; }
+<TEXTS>[^\n "][^"]*[^\n "]                      { yylval.str = strdup(yytext); return TEXT; }
+<*>[%;,"\[\]:|]                                 { return yytext[0]; }
+<*>.|\n                                         { ; }
 %%
 
 int yywrap() { return 1; }

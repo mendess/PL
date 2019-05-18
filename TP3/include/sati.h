@@ -9,6 +9,8 @@ typedef enum sati_error {
     ENGLISH_NAME_ALREADY_DEFINED = 4,
 } SATI_ERROR;
 
+void sati_start();
+
 SATI_ERROR sati_add_word(const char* word);
 
 SATI_ERROR sati_add_meaning(const char* meaning);
@@ -19,6 +21,8 @@ SATI_ERROR sati_add_synonym(const char* synonym);
 
 void sati_dump();
 
-void sati_parse_text(const char*);
+void sati_parse_text(const char*, const char*);
+
+void sati_end();
 
 #endif // SATI_H

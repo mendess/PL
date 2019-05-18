@@ -6,6 +6,9 @@ void yyerror(char *s);
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#define BOLD "\033[1m"
+#define RED "\033[31m"
+#define CLEAR "\033[0m"
 extern int yylineno;
 void add_synonym(const char*);
 void add_meaning(const char*);
@@ -14,9 +17,10 @@ void add_word(const char*);
 %}
 %union { char* str; }
 %token <str> ID
-%type <str> Wd Synonym Meaning EnglishName Dicl Word Synonyms Text
+%token <str> TEXT
+%type <str> Wd Synonym Meaning EnglishName Dicl Word Synonyms Text Title
 %%
-Sati : Dicl '%' '%' Texts
+Sati : Dicl '%' Texts
      ;
 
 Dicl : Word
@@ -44,27 +48,41 @@ EnglishName : ID                   { add_english_name($1); }
 Wd : ID                            { add_word($1); }
    ;
 
-Texts : '"' Text '"'
-      | Texts '"' Text '"'
+Texts : '"' Text '"'               { sati_parse_text("", $2); }
+      | Title '"' Text '"'         { sati_parse_text($1, $3); }
+      | Texts '"' Text '"'         { sati_parse_text("", $3); }
+      | Texts Title '"' Text '"'   { sati_parse_text($2, $4); }
       ;
 
-Text : ID                          { sati_parse_text($1); }
+Text : TEXT                          { $$=$1; }
      ;
+
+Title : TEXT                         { $$=$1; }
+      ;
 %%
+
+#include "lex.yy.c"
+void yyerror(char* s) {
+    fprintf(stderr, BOLD RED"error" CLEAR BOLD" on line %d:"CLEAR" %s\n", yylineno, s);
+}
+
 
 void test_errors(SATI_ERROR e, const char * word) {
     switch(e) {
         case NO_CURRENT_WORD:
-            printf("No current word: line %d\n", yylineno);
+            yyerror("No current word");
             exit(1);
-        case WORD_ALREADY_DEFINED:
-            printf("'%s' already defined: line %d\n", word, yylineno);
+        case WORD_ALREADY_DEFINED: {
+            char msg[1024];
+            snprintf(msg, 1024, "'%s' already defined", word);
+            yyerror(msg);
             exit(1);
+        }
         case MEANING_ALREADY_DEFINED:
-            printf("Meaning already added: line %d\n", yylineno);
+            yyerror("Meaning already added");
             exit(1);
         case ENGLISH_NAME_ALREADY_DEFINED:
-            printf("English name already addded: line %d\n", yylineno);
+            yyerror("English name already addded");
             exit(1);
         default: return;
     }
@@ -86,14 +104,10 @@ void add_word(const char* s) {
     test_errors(sati_add_word(s), s);
 }
 
-#include "lex.yy.c"
-void yyerror(char* s) {
-    printf("Error: %s\n", s);
-}
-
 int main() {
+    sati_start();
     yyparse();
-    sati_dump();
+    sati_end();
     return 0;
 }
 
