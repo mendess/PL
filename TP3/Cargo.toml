@@ -9,3 +9,5 @@ name = "sati"
 path = "src/sati.rs"
 crate-type = ["staticlib"]
 
+[dependencies]
+itertools = "0.8.0"

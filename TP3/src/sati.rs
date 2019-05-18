@@ -2,15 +2,16 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ffi::CStr;
 use std::fs::File;
-use std::io::stdout;
-use std::io::Write;
-use std::os::raw::c_char;
-use std::os::raw::c_int;
+use std::io::{stdout, Write};
+use std::os::raw::{c_char, c_int};
 use std::thread_local;
+
+use itertools::Itertools;
 
 pub struct Sati {
     database: HashMap<String, Word>,
     current_word: Option<String>,
+    untitled_number: usize,
 }
 
 struct Word {
@@ -25,17 +26,25 @@ pub enum SatiError {
     WordAlreadyDefined = 2,
     MeaningAlreadyDefined = 3,
     EnglishNameAlreadyDefined = 4,
-    FileNotFound = 5,
+    IOError = 5,
+}
+
+impl From<std::io::Error> for SatiError {
+    fn from(_: std::io::Error) -> Self {
+        SatiError::IOError
+    }
 }
 
 pub struct Config {
     output: Box<dyn Write>,
+    split: bool,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Config {
             output: Box::new(stdout()),
+            split: false,
         }
     }
 }
@@ -44,6 +53,7 @@ thread_local!(
     static INSTANCE: RefCell<Sati> = RefCell::new(Sati {
         database: HashMap::new(),
         current_word: None,
+        untitled_number: 0,
     });
     static CONFIG: RefCell<Config> = RefCell::new(Config::default());
 );
@@ -52,21 +62,44 @@ thread_local!(
 pub extern "C" fn sati_set_output(file: *const c_char) -> c_int {
     let file = match File::create(c_char_to_string(file)) {
         Ok(f) => f,
-        Err(_) => return SatiError::FileNotFound as c_int,
+        Err(_) => return SatiError::IOError as c_int,
     };
     CONFIG.with(|c| c.borrow_mut().output = Box::new(file));
     0
 }
 
 #[no_mangle]
-pub extern "C" fn sati_start() {
-    let header = include_str!("../assets/template.tex");
-    CONFIG.with(|c| writeln!(c.borrow_mut().output, "{}", header).unwrap());
+pub extern "C" fn sati_set_split() {
+    CONFIG.with(|c| c.borrow_mut().split = true);
 }
 
 #[no_mangle]
-pub extern "C" fn sati_end() {
-    CONFIG.with(|c| writeln!(c.borrow_mut().output, r#"\end{{document}}"#).unwrap());
+pub extern "C" fn sati_start() -> c_int {
+    let header = include_str!("../assets/template.tex");
+    CONFIG
+        .with(|c| {
+            if !c.borrow().split {
+                writeln!(c.borrow_mut().output, "{}", header).map_err(SatiError::from)
+            } else {
+                Ok(())
+            }
+        })
+        .map(|_| 0)
+        .unwrap_or_else(|x| x as i32)
+}
+
+#[no_mangle]
+pub extern "C" fn sati_end() -> c_int {
+    CONFIG
+        .with(|c| {
+            if !c.borrow().split {
+                writeln!(c.borrow_mut().output, r#"\end{{document}}"#).map_err(SatiError::from)
+            } else {
+                Ok(())
+            }
+        })
+        .map(|_| 0)
+        .unwrap_or_else(|x| x as i32)
 }
 
 #[no_mangle]
@@ -106,13 +139,16 @@ pub extern "C" fn sati_add_synonym(word: *const c_char) -> c_int {
 }
 
 #[no_mangle]
-pub extern "C" fn sati_parse_text(title: *const c_char, text: *const c_char) {
+pub extern "C" fn sati_parse_text(title: *const c_char, text: *const c_char) -> c_int {
     let title = match c_char_to_string(title) {
-        ref x if x.is_empty() => String::from("Untitled"),
-        s => s,
+        ref x if x.is_empty() => None,
+        s => Some(s),
     };
     let text = c_char_to_string(text);
-    INSTANCE.with(|s| s.borrow().parse_text(title, text));
+    INSTANCE
+        .with(|s| s.borrow_mut().parse_text(title, text))
+        .map(|_| 0)
+        .unwrap_or_else(|x| x as i32)
 }
 
 #[no_mangle]
@@ -169,7 +205,7 @@ impl Sati {
         Ok(())
     }
 
-    fn parse_text(&self, title: String, text: String) {
+    fn parse_text(&mut self, title: Option<String>, text: String) -> Result<(), SatiError> {
         let text = text
             .split(' ')
             .map(|x| {
@@ -182,10 +218,36 @@ impl Sati {
                     None => x.to_string(),
                 }
             })
-            .collect::<Vec<_>>()
             .join(" ");
-        CONFIG
-            .with(|c| writeln!(c.borrow_mut().output, "\\chapter{{{}}}\n{}", title, text).unwrap());
+        CONFIG.with(|c| {
+            if c.borrow().split {
+                let header = include_str!("../assets/template.tex");
+                let filename = title.as_ref().map_or_else(
+                    || {
+                        self.untitled_number += 1;
+                        format!("Untitled_{}.tex", self.untitled_number)
+                    },
+                    |t| format!("{}.tex", t),
+                );
+                let mut file = File::create(filename).unwrap();
+                writeln!(file, "{}", header)?;
+                writeln!(
+                    file,
+                    "\\chapter{{{}}}\n{}",
+                    title.unwrap_or_else(|| String::from("Untitled")),
+                    text
+                )?;
+                writeln!(file, r#"\end{{document}}"#)?;
+            } else {
+                writeln!(
+                    c.borrow_mut().output,
+                    "\\chapter{{{}}}\n{}",
+                    title.unwrap_or_else(|| String::from("Untitled")),
+                    text
+                )?;
+            }
+            Ok(())
+        })
     }
 
     fn dump(&self) {
@@ -220,11 +282,11 @@ impl Word {
 
     fn to_footnote(&self) -> String {
         format!(
-            "\\footnote{{\\textbf{{{}}}: Meaining: {}, English Name: {}, Synonyms: {:?}}}",
+            "\\footnote{{\\textbf{{{}}}: Significado: {}, Nome inglês: {}\\\\\\indent \\indent Synonyms: {}}}",
             self.wd,
             self.meaning.as_ref().unwrap(),
             self.english_name.as_ref().unwrap(),
-            self.synonyms
-        )
+            self.synonyms.join(", ")
+            )
     }
 }
