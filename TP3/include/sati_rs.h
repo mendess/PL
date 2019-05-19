@@ -10,24 +10,26 @@ typedef enum sati_error {
     IO_ERROR = 5
 } SATI_ERROR;
 
-SATI_ERROR sati_set_output(const char*);
+typedef struct sati Sati;
 
-void sati_set_split();
+Sati* sati_start_with_output(const char*);
 
-SATI_ERROR sati_start();
+Sati* sati_start_split();
 
-SATI_ERROR sati_add_word(const char* word);
+Sati* sati_start();
 
-SATI_ERROR sati_add_meaning(const char* meaning);
+SATI_ERROR sati_add_word(Sati*, const char* word);
 
-SATI_ERROR sati_add_english_name(const char* english_name);
+SATI_ERROR sati_add_meaning(Sati*, const char* meaning);
 
-SATI_ERROR sati_add_synonym(const char* synonym);
+SATI_ERROR sati_add_english_name(Sati*, const char* english_name);
 
-void sati_dump();
+SATI_ERROR sati_add_synonym(Sati*, const char* synonym);
 
-SATI_ERROR sati_parse_text(const char*, const char*);
+void sati_dump(Sati*);
 
-SATI_ERROR sati_end();
+SATI_ERROR sati_parse_text(Sati*, const char*, const char*);
+
+SATI_ERROR sati_end(Sati*);
 
 #endif // SATI_RS_H

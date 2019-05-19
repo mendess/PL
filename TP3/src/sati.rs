@@ -1,17 +1,25 @@
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ffi::CStr;
 use std::fs::File;
 use std::io::{stdout, Write};
 use std::os::raw::{c_char, c_int};
-use std::thread_local;
 
 use itertools::Itertools;
+
+const HEADER: &str = include_str!("../assets/header.tex");
+const FOOTER: &str = include_str!("../assets/footer.tex");
 
 pub struct Sati {
     database: HashMap<String, Word>,
     current_word: Option<String>,
     untitled_number: usize,
+    output: Option<Box<dyn Write>>,
+}
+
+impl Default for Sati {
+    fn default() -> Sati {
+        Sati::new()
+    }
 }
 
 struct Word {
@@ -35,132 +43,34 @@ impl From<std::io::Error> for SatiError {
     }
 }
 
-pub struct Config {
-    output: Box<dyn Write>,
-    split: bool,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Config {
-            output: Box::new(stdout()),
-            split: false,
+impl Sati {
+    fn new() -> Sati {
+        Sati {
+            database: HashMap::new(),
+            current_word: None,
+            untitled_number: 0,
+            output: Some(Box::new(stdout())),
         }
     }
-}
 
-thread_local!(
-    static INSTANCE: RefCell<Sati> = RefCell::new(Sati {
-        database: HashMap::new(),
-        current_word: None,
-        untitled_number: 0,
-    });
-    static CONFIG: RefCell<Config> = RefCell::new(Config::default());
-);
+    fn new_with_output(file: File) -> Sati {
+        Sati {
+            database: HashMap::new(),
+            current_word: None,
+            untitled_number: 0,
+            output: Some(Box::new(file)),
+        }
+    }
 
-#[no_mangle]
-pub extern "C" fn sati_set_output(file: *const c_char) -> c_int {
-    let file = match File::create(c_char_to_string(file)) {
-        Ok(f) => f,
-        Err(_) => return SatiError::IOError as c_int,
-    };
-    CONFIG.with(|c| c.borrow_mut().output = Box::new(file));
-    0
-}
+    fn new_split() -> Sati {
+        Sati {
+            database: HashMap::new(),
+            current_word: None,
+            untitled_number: 0,
+            output: None,
+        }
+    }
 
-#[no_mangle]
-pub extern "C" fn sati_set_split() {
-    CONFIG.with(|c| c.borrow_mut().split = true);
-}
-
-#[no_mangle]
-pub extern "C" fn sati_start() -> c_int {
-    let header = include_str!("../assets/template.tex");
-    CONFIG
-        .with(|c| {
-            if !c.borrow().split {
-                writeln!(c.borrow_mut().output, "{}", header).map_err(SatiError::from)
-            } else {
-                Ok(())
-            }
-        })
-        .map(|_| 0)
-        .unwrap_or_else(|x| x as i32)
-}
-
-#[no_mangle]
-pub extern "C" fn sati_end() -> c_int {
-    CONFIG
-        .with(|c| {
-            if !c.borrow().split {
-                writeln!(c.borrow_mut().output, r#"\end{{document}}"#).map_err(SatiError::from)
-            } else {
-                Ok(())
-            }
-        })
-        .map(|_| 0)
-        .unwrap_or_else(|x| x as i32)
-}
-
-#[no_mangle]
-pub extern "C" fn sati_add_word(word: *const c_char) -> c_int {
-    let word = c_char_to_string(word);
-    INSTANCE
-        .with(|s| s.borrow_mut().add_word(word))
-        .map(|_| 0)
-        .unwrap_or_else(|x| x as i32)
-}
-
-#[no_mangle]
-pub extern "C" fn sati_add_meaning(word: *const c_char) -> c_int {
-    let word = c_char_to_string(word);
-    INSTANCE
-        .with(|s| s.borrow_mut().add_meaning(word))
-        .map(|_| 0)
-        .unwrap_or_else(|x| x as i32)
-}
-
-#[no_mangle]
-pub extern "C" fn sati_add_english_name(word: *const c_char) -> c_int {
-    let word = c_char_to_string(word);
-    INSTANCE
-        .with(|s| s.borrow_mut().add_english_name(word))
-        .map(|_| 0)
-        .unwrap_or_else(|x| x as i32)
-}
-
-#[no_mangle]
-pub extern "C" fn sati_add_synonym(word: *const c_char) -> c_int {
-    let word = c_char_to_string(word);
-    INSTANCE
-        .with(|s| s.borrow_mut().add_synonym(word))
-        .map(|_| 0)
-        .unwrap_or_else(|x| x as i32)
-}
-
-#[no_mangle]
-pub extern "C" fn sati_parse_text(title: *const c_char, text: *const c_char) -> c_int {
-    let title = match c_char_to_string(title) {
-        ref x if x.is_empty() => None,
-        s => Some(s),
-    };
-    let text = c_char_to_string(text);
-    INSTANCE
-        .with(|s| s.borrow_mut().parse_text(title, text))
-        .map(|_| 0)
-        .unwrap_or_else(|x| x as i32)
-}
-
-#[no_mangle]
-pub extern "C" fn sati_dump() {
-    INSTANCE.with(|s| s.borrow().dump());
-}
-
-fn c_char_to_string(w: *const c_char) -> String {
-    unsafe { CStr::from_ptr(w).to_string_lossy().into_owned() }
-}
-
-impl Sati {
     fn current_word(&mut self) -> Result<&mut Word, SatiError> {
         let cw = self.current_word.as_ref().ok_or(SatiError::NoCurrentWord)?;
         Ok(self.database.get_mut(cw).unwrap())
@@ -219,9 +129,8 @@ impl Sati {
                 }
             })
             .join(" ");
-        CONFIG.with(|c| {
-            if c.borrow().split {
-                let header = include_str!("../assets/template.tex");
+        match self.output.as_mut() {
+            None => {
                 let filename = title.as_ref().map_or_else(
                     || {
                         self.untitled_number += 1;
@@ -230,24 +139,26 @@ impl Sati {
                     |t| format!("{}.tex", t),
                 );
                 let mut file = File::create(filename).unwrap();
-                writeln!(file, "{}", header)?;
+                writeln!(file, "{}", HEADER)?;
                 writeln!(
                     file,
                     "\\chapter{{{}}}\n{}",
                     title.unwrap_or_else(|| String::from("Untitled")),
                     text
                 )?;
-                writeln!(file, r#"\end{{document}}"#)?;
-            } else {
+                writeln!(file, "{}", FOOTER)?;
+                Ok(())
+            }
+            Some(o) => {
                 writeln!(
-                    c.borrow_mut().output,
+                    o,
                     "\\chapter{{{}}}\n{}",
                     title.unwrap_or_else(|| String::from("Untitled")),
                     text
                 )?;
+                Ok(())
             }
-            Ok(())
-        })
+        }
     }
 
     fn dump(&self) {
@@ -289,4 +200,102 @@ impl Word {
             self.synonyms.join(", ")
             )
     }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn sati_start_with_output(file: *const c_char) -> *mut Sati {
+    let mut file = match File::create(c_char_to_string(file)) {
+        Ok(f) => f,
+        Err(_) => return std::ptr::null_mut(),
+    };
+    match writeln!(file, "{}", HEADER).map_err(SatiError::from) {
+        Ok(_) => Box::into_raw(Box::new(Sati::new_with_output(file))),
+        Err(_) => std::ptr::null_mut(),
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn sati_start_split() -> *mut Sati {
+    Box::into_raw(Box::new(Sati::new_split()))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn sati_start() -> *mut Sati {
+    match writeln!(std::io::stdout(), "{}", HEADER).map_err(SatiError::from) {
+        Ok(_) => Box::into_raw(Box::new(Sati::default())),
+        Err(_) => std::ptr::null_mut(),
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn sati_end(sati: *mut Sati) -> c_int {
+    let sati = Box::from_raw(sati);
+    match sati.output {
+        Some(mut o) => writeln!(o, "{}", FOOTER).map_err(SatiError::from),
+        None => Ok(()),
+    }
+    .map(|_| 0)
+    .unwrap_or_else(|_| SatiError::IOError as c_int)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn sati_add_word(sati: *mut Sati, word: *const c_char) -> c_int {
+    let word = c_char_to_string(word);
+    (&mut *sati)
+        .add_word(word)
+        .map(|_| 0)
+        .unwrap_or_else(|x| x as i32)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn sati_add_meaning(sati: *mut Sati, word: *const c_char) -> c_int {
+    let word = c_char_to_string(word);
+    (&mut *sati)
+        .add_meaning(word)
+        .map(|_| 0)
+        .unwrap_or_else(|x| x as i32)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn sati_add_english_name(sati: *mut Sati, word: *const c_char) -> c_int {
+    let word = c_char_to_string(word);
+    (&mut *sati)
+        .add_english_name(word)
+        .map(|_| 0)
+        .unwrap_or_else(|x| x as i32)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn sati_add_synonym(sati: *mut Sati, word: *const c_char) -> c_int {
+    let word = c_char_to_string(word);
+    (&mut *sati)
+        .add_synonym(word)
+        .map(|_| 0)
+        .unwrap_or_else(|x| x as i32)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn sati_parse_text(
+    sati: *mut Sati,
+    title: *const c_char,
+    text: *const c_char,
+) -> c_int {
+    let title = match c_char_to_string(title) {
+        ref x if x.is_empty() => None,
+        s => Some(s),
+    };
+    let text = c_char_to_string(text);
+    (&mut *sati)
+        .parse_text(title, text)
+        .map(|_| 0)
+        .unwrap_or_else(|x| x as i32)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn sati_dump(sati: *mut Sati) {
+    (&*sati).dump()
+}
+
+fn c_char_to_string(w: *const c_char) -> String {
+    unsafe { CStr::from_ptr(w).to_string_lossy().into_owned() }
 }

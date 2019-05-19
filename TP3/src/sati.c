@@ -1,3 +1,4 @@
+#include "sati.h"
 #include "sati_rs.h"
 #include "y.tab.h"
 
@@ -10,6 +11,7 @@
 #include <unistd.h>
 
 extern int yylineno;
+static Sati* SATI = NULL;
 
 void yyerror(char* s)
 {
@@ -50,31 +52,31 @@ void test_errors(SATI_ERROR e, const char* word)
 
 void add_synonym(char* s)
 {
-    test_errors(sati_add_synonym(s), s);
+    test_errors(sati_add_synonym(SATI, s), s);
     free(s);
 }
 
 void add_meaning(char* s)
 {
-    test_errors(sati_add_meaning(s), s);
+    test_errors(sati_add_meaning(SATI, s), s);
     free(s);
 }
 
 void add_english_name(char* s)
 {
-    test_errors(sati_add_english_name(s), s);
+    test_errors(sati_add_english_name(SATI, s), s);
     free(s);
 }
 
 void add_word(char* s)
 {
-    test_errors(sati_add_word(s), s);
+    test_errors(sati_add_word(SATI, s), s);
     free(s);
 }
 
 void parse_text(char* title, char* text)
 {
-    test_errors(sati_parse_text(title, text), title);
+    test_errors(sati_parse_text(SATI, title, text), title);
     free(title);
     free(text);
 }
@@ -125,12 +127,18 @@ void load_args(int argc, char* const* argv)
     } while (opt != -1);
     switch (out_mode) {
     case SINGLE_FILE:
-        test_errors(sati_set_output(output_file), output_file);
+        if (!(SATI = sati_start_with_output(output_file)))
+            test_errors(IO_ERROR, output_file);
         break;
     case SPLIT:
-        sati_set_split();
+        if (!(SATI = sati_start_split())) {
+            test_errors(IO_ERROR, "split mode");
+        }
         break;
-    default:
+    case STDOUT:
+        if (!(SATI = sati_start())) {
+            test_errors(IO_ERROR, "Standard output");
+        }
         break;
     }
 }
@@ -138,9 +146,8 @@ void load_args(int argc, char* const* argv)
 int main(int argc, char* const* argv)
 {
     load_args(argc, argv);
-    test_errors(sati_start(), "output_file");
     yyparse();
-    test_errors(sati_end(), "output_file");
+    test_errors(sati_end(SATI), "output_file");
     yylex_destroy();
     return 0;
 }
