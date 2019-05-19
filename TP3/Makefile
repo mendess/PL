@@ -57,7 +57,7 @@ target/release/libsati.$(EXT): src/sati.rs Cargo.toml
 	cargo build --release
 
 target/debug/libsati.$(EXT): src/sati.rs Cargo.toml
-	cargo build --release
+	cargo build
 
 # DIRECTORIES
 

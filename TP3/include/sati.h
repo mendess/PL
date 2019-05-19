@@ -3,16 +3,18 @@
 
 int yylex();
 
+int yylex_destroy();
+
 void yyerror(char* s);
 
-void add_synonym(const char*);
+void add_synonym(char*);
 
-void add_meaning(const char*);
+void add_meaning(char*);
 
-void add_english_name(const char*);
+void add_english_name(char*);
 
-void add_word(const char*);
+void add_word(char*);
 
-void parse_text(const char*, const char*);
+void parse_text(char*, char*);
 
 #endif // SATI_H

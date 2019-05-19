@@ -48,29 +48,35 @@ void test_errors(SATI_ERROR e, const char* word)
     }
 }
 
-void add_synonym(const char* s)
+void add_synonym(char* s)
 {
     test_errors(sati_add_synonym(s), s);
+    free(s);
 }
 
-void add_meaning(const char* s)
+void add_meaning(char* s)
 {
     test_errors(sati_add_meaning(s), s);
+    free(s);
 }
 
-void add_english_name(const char* s)
+void add_english_name(char* s)
 {
     test_errors(sati_add_english_name(s), s);
+    free(s);
 }
 
-void add_word(const char* s)
+void add_word(char* s)
 {
     test_errors(sati_add_word(s), s);
+    free(s);
 }
 
-void parse_text(const char* title, const char* text)
+void parse_text(char* title, char* text)
 {
     test_errors(sati_parse_text(title, text), title);
+    free(title);
+    free(text);
 }
 
 typedef enum outputmode {
@@ -79,7 +85,7 @@ typedef enum outputmode {
     SPLIT
 } OutputMode;
 
-void load_args(int argc, char** argv)
+void load_args(int argc, char* const* argv)
 {
     OutputMode out_mode = STDOUT;
     struct option long_options[] = {
@@ -129,11 +135,12 @@ void load_args(int argc, char** argv)
     }
 }
 
-int main(int argc, char** argv)
+int main(int argc, char* const* argv)
 {
     load_args(argc, argv);
     test_errors(sati_start(), "output_file");
     yyparse();
     test_errors(sati_end(), "output_file");
+    yylex_destroy();
     return 0;
 }
