@@ -23,8 +23,8 @@ Synonyms : Synonym ','
          | Synonyms Synonym
          ;
 
-Synonym : ID                         { add_synonym($1); }
-        ;
+Wd : ID                              { add_word($1); }
+   ;
 
 Meaning : ID                         { add_meaning($1); }
         ;
@@ -32,8 +32,9 @@ Meaning : ID                         { add_meaning($1); }
 EnglishName : ID                     { add_english_name($1); }
             ;
 
-Wd : ID                              { add_word($1); }
-   ;
+Synonym : ID                         { add_synonym($1); }
+        ;
+
 
 Texts : '"' Text '"'                 { parse_text($2); }
       | Title '"' Text '"'           { parse_text_with_title($1, $3); }

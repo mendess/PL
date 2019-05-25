@@ -43,14 +43,18 @@ __lex: $(SOURCES_DIR)/sati.l
 	@mkdir -p $(T_GIC)
 	flex -o $(LEX_OUT) $<
 
-$(GIC_OBJ_R): $(SOURCES_DIR)/sati.y __lex __include_dir
+$(GIC_OBJ_R): $(SOURCES_DIR)/sati.y __lex __include_dir __protect
 	@mkdir -p $(T_GIC)
-	yacc $< -o $(GIC_OUT) --defines=$(HEADERS)/y.tab.h
+	yacc $< -o $(GIC_OUT) --defines=$(HEADERS)/y.tab.h --graph=graph.y
+	-dot graph.y -Tjpg > report/sati.jpg
+	rm graph.y
+	make __unprotect
 	cc $(OPTIMISE) -I$(HEADERS) -I$(T_GIC) -c $(GIC_OUT) -o $(GIC_OBJ_R)
 
-$(GIC_OBJ_D): $(SOURCES_DIR)/sati.y __lex __include_dir
+$(GIC_OBJ_D): $(SOURCES_DIR)/sati.y __lex __include_dir __protect
 	@mkdir -p $(T_GIC)
 	yacc $< -o $(GIC_OUT) --defines=$(HEADERS)/y.tab.h
+	make __unprotect
 	cc $(DEBUG) -I$(HEADERS) -c $(GIC_OUT) -o $(GIC_OBJ_D)
 
 target/release/libsati.$(EXT): src/sati.rs Cargo.toml
@@ -60,7 +64,6 @@ target/debug/libsati.$(EXT): src/sati.rs Cargo.toml
 	cargo build
 
 # DIRECTORIES
-
 __release_dir:
 	@mkdir -p $(T_RELEASE)
 
@@ -74,6 +77,13 @@ __include_dir:
 	@mkdir -p include
 
 # OTHER SCRIPTS
+
+__protect:
+	chmod a-w src/
+
+__unprotect:
+	chmod ug+w src/
+
 clean:
 	rm -rf $(T_RELEASE)
 	rm -rf $(T_DEBUG)
