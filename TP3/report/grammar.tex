@@ -1,0 +1,102 @@
+\newlength\rulelhs
+\newlength\rulemid
+\newlength\rulerhs
+\settowidth\rulelhs{EnglishName}
+\settowidth\rulemid{::=}
+\setlength\rulerhs{\textwidth}
+\addtolength\rulerhs{-\rulelhs}
+\addtolength\rulerhs{-\rulemid}
+\addtolength\rulerhs{-6\tabcolsep}
+
+\begin{longtable}{lrl}
+Sati        & ::= &
+  \begin{minipage}[t]{\rulerhs}
+    \raggedright
+    dicl ``{\bf $\%$}'' texts
+  \end{minipage}                                                             \\
+dicl        & ::= &
+  \begin{minipage}[t]{\rulerhs}
+    \raggedright
+    Word
+  \end{minipage}                                                             \\
+dicl        & ::= &
+  \begin{minipage}[t]{\rulerhs}
+    \raggedright
+    dicl Word
+  \end{minipage}                                                             \\
+Word        & ::= &
+  \begin{minipage}[t]{\rulerhs}
+    \raggedright
+    Wd ``{\bf :}'' Meaning ``{\bf $|$}'' EnglishName ``{\bf $|$}'' ``{\bf $[$}'' Synonyms ``{\bf $]$}'' ``{\bf ;}''
+  \end{minipage}                                                             \\
+Word        & ::= &
+  \begin{minipage}[t]{\rulerhs}
+    \raggedright
+    Wd ``{\bf :}'' Meaning ``{\bf $|$}'' EnglishName ``{\bf $|$}'' Synonym ``{\bf ;}''
+  \end{minipage}                                                             \\
+Synonyms    & ::= &
+  \begin{minipage}[t]{\rulerhs}
+    \raggedright
+    Synonym ``{\bf ,}''
+  \end{minipage}                                                             \\
+Synonyms    & ::= &
+  \begin{minipage}[t]{\rulerhs}
+    \raggedright
+    Synonyms Synonym ``{\bf ,}''
+  \end{minipage}                                                             \\
+Synonyms    & ::= &
+  \begin{minipage}[t]{\rulerhs}
+    \raggedright
+    Synonyms Synonym
+  \end{minipage}                                                             \\
+Wd          & ::= &
+  \begin{minipage}[t]{\rulerhs}
+    \raggedright
+    ID 
+  \end{minipage}                                                             \\
+Meaning     & ::= &
+  \begin{minipage}[t]{\rulerhs}
+    \raggedright
+    ID 
+  \end{minipage}                                                             \\
+EnglishName & ::= &
+  \begin{minipage}[t]{\rulerhs}
+    \raggedright
+    ID 
+  \end{minipage}                                                             \\
+Synonym     & ::= &
+  \begin{minipage}[t]{\rulerhs}
+    \raggedright
+    ID 
+  \end{minipage}                                                             \\
+Texts       & ::= &
+  \begin{minipage}[t]{\rulerhs}
+    \raggedright
+    ``{\bf  Text }''
+  \end{minipage}                                                             \\
+Texts       & ::= &
+  \begin{minipage}[t]{\rulerhs}
+    \raggedright
+    Title ``{\bf  Text }''
+  \end{minipage}                                                             \\
+Texts       & ::= &
+  \begin{minipage}[t]{\rulerhs}
+    \raggedright
+    Texts ``{\bf  Text }''
+  \end{minipage}                                                             \\
+Texts       & ::= &
+  \begin{minipage}[t]{\rulerhs}
+    \raggedright
+    Texts Title ``{\bf  Text }''
+  \end{minipage}                                                             \\
+Text        & ::= &
+  \begin{minipage}[t]{\rulerhs}
+    \raggedright
+    TEXT
+  \end{minipage}                                                             \\
+Title       & ::= &
+  \begin{minipage}[t]{\rulerhs}
+    \raggedright
+    TEXT
+  \end{minipage}                                                             \\
+\end{longtable}
