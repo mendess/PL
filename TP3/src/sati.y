@@ -35,10 +35,10 @@ EnglishName : ID                     { add_english_name($1); }
 Wd : ID                              { add_word($1); }
    ;
 
-Texts : '"' Text '"'                 { parse_text("", $2); }
-      | Title '"' Text '"'           { parse_text($1, $3); }
-      | Texts '"' Text '"'           { parse_text("", $3); }
-      | Texts Title '"' Text '"'     { parse_text($2, $4); }
+Texts : '"' Text '"'                 { parse_text($2); }
+      | Title '"' Text '"'           { parse_text_with_title($1, $3); }
+      | Texts '"' Text '"'           { parse_text($3); }
+      | Texts Title '"' Text '"'     { parse_text_with_title($2, $4); }
       ;
 
 Text : TEXT                          { $$=$1; }

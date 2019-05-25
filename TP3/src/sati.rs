@@ -138,7 +138,7 @@ impl Sati {
                     },
                     |t| format!("{}.tex", t),
                 );
-                let mut file = File::create(filename).unwrap();
+                let mut file = File::create(filename)?;
                 writeln!(file, "{}", HEADER)?;
                 writeln!(
                     file,

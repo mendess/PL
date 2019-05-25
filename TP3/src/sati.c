@@ -74,7 +74,13 @@ void add_word(char* s)
     free(s);
 }
 
-void parse_text(char* title, char* text)
+void parse_text(char* text)
+{
+    test_errors(sati_parse_text(SATI, "",  text), "untitled");
+    free(text);
+}
+
+void parse_text_with_title(char* title, char* text)
 {
     test_errors(sati_parse_text(SATI, title, text), title);
     free(title);
