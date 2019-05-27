@@ -1,0 +1,20 @@
+\tikzstyle{struct}=[fill=white, draw=black, rectangle split, drop shadow, rectangle split parts=2]
+\newcommand{\type}[1]{\textcolor{BurntOrange}{#1}}
+\begin{tikzpicture}[font=\ttfamily,auto]
+    \node (Sati) [struct]{%
+        \nodepart[text centered, text=MidnightBlue]{one}\textbf{Sati}
+        \nodepart[text width=5.3cm]{second}
+        dictionary: \type{Map}<\type{String}, \type{Word}>\newline
+        current\_word: \type{String}\newline
+        untitled\_number: \type{int}\newline
+        output: \type{File}*
+        };
+    \node (Word) [struct, below = of Sati]{%
+        \nodepart[text centered, text=MidnightBlue]{one}\textbf{Word}
+        \nodepart[text width=3.7cm]{second}
+        wd: \type{String}\newline
+        meaning: \type{String}\newline
+        english\_name: \type{String}\newline
+        synonyms: [\type{String}]
+        };
+\end{tikzpicture}

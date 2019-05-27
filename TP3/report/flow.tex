@@ -1,0 +1,32 @@
+\tikzstyle{struct}=[fill=white, draw=black, rectangle, drop shadow, minimum height=2.5cm, minimum width=7.5cm]
+\begin{tikzpicture}[font=\ttfamily,auto]
+    \node (Sati) [struct]{};
+    \node[above=0.3cm of Sati] (m) {\textcolor{MidnightBlue}{\textbf{Sati}}};
+
+    \node[left=5.5cm of Sati.north west] (ParserTop) {};
+    \node[left=5.5cm of Sati.south west] (ParserBot) {};
+    \node[left=4.95cm of Sati.west] (n) {Parser};
+
+    \draw[->, very thick] (ParserTop) to[bend left=70] (ParserBot);
+    \draw[->, very thick] (ParserBot) to[bend left=70] (ParserTop);
+
+    \draw (Sati.north west) --
+    node[pos=0.25] (SatiMidTop) {}
+    node[pos=0.5] (SatiMiddle) {}
+    node[pos=0.75] (SatiMidBot) {}
+    (Sati.south west);
+
+    \draw[->, thick] (ParserTop) -- node {add\_word(wd);} (Sati.north west);
+    \draw[->, thick] ($ (SatiMidTop) + (-5, 0) $) -- node {add\_meaining(mean);} (SatiMidTop);
+    \draw[->, thick] ($ (SatiMiddle) + (-5, 0) $) -- node {add\_english\_name(en);} (SatiMiddle);
+    \draw[->, thick] ($ (SatiMidBot) + (-5, 0) $)  -- node {add\_synonym(syn);} (SatiMidBot);
+
+    \draw[->, thick] (Sati.north west) to[bend left=70]
+    node {dictionary[wd] = Word::new(); cw = wd;} ($ (Sati.north west) + (0,-0.5) $);
+    \draw[->, thick] ($ (Sati.north west) + (0,-0.65) $) to[bend left=70]
+    node {dictionary[cw].meaning = mean} ($ (Sati.north west) + (0,-1.15) $);
+    \draw[->, thick] (Sati.west)       to[bend left=70]
+    node {dictionary[cw].english\_name = en} ($ (Sati.west) + (0,-0.5) $);
+    \draw[->, thick] ($ (Sati.west) + (0,-0.65) $) to[bend left=70]
+    node {dictionary[cw].synonyms.push(syn)} ($ (Sati.west) + (0,-1.15) $);
+\end{tikzpicture}

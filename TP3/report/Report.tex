@@ -1,26 +1,23 @@
 \documentclass[a4paper]{report}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[x11names, rgb]{xcolor}
 \usepackage{a4wide}
-\usepackage{lscape}
-\usepackage{hyperref}
-\usepackage{longtable}
 \usepackage{syntax}
+\usepackage{hyperref}
 \hypersetup{pdftitle={Processing an Angolan Newspaper},
 pdfauthor={Pedro Mendes},
 colorlinks=true,
 urlcolor=blue,
 linkcolor=black}
-\usepackage{subcaption}
 \usepackage[cache=false]{minted}
 \usepackage{listings}
-\usepackage{booktabs}
-\usepackage{multirow}
 \usepackage{appendix}
-\usepackage{tikz}
 \usepackage{amsmath}
-\usetikzlibrary{snakes,arrows,shapes}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows,positioning,automata,decorations.markings,shadows,shapes,calc}
+\usepackage{wrapfig}
+\usepackage{graphicx}
 
 \begin{document}
 
@@ -86,8 +83,9 @@ Similarly to how an imperative
 program is split in two, declarations and instructions, this language is split
 between dictionary (\textit{Dicl}) and texts (\textit{Texts}), separated by one or more `\verb!\%!'.
 
-\lstinputlisting[firstline=10,lastline=12,basicstyle=\footnotesize\ttfamily]
-{../src/sati.y}
+\begin{grammar}
+    <sati> $\to$ <dicl> '\%' <texts>
+\end{grammar}
 
 \subsection{Dictionary}
 
@@ -95,7 +93,7 @@ The dictionary is a collection of words and each word is composed of 4 parts.
 
 \begin{grammar}
     <dicl> $\to$ <word>
-    \alt{} <dicl> <word>
+    \alt <dicl> <word>
 \end{grammar}
 
 The word to find in the dictionary \textit{WD}, it's meaning \textit{Meaning}
@@ -107,11 +105,11 @@ on the list may or may not be followed by a comma.
 
 \begin{grammar}
     <word> $\to$ <wd> `:' <meaning> `|' <englishName> `|' `[' <synonyms> `]' `;'
-    \alt{} <meaning> `|' <englishName> `|' <synonym> `;'
+    \alt <meaning> `|' <englishName> `|' <synonym> `;'
 
     <synonyms> $\to$ <synonym> `,'
-    \alt{} <synonyms> <synonym> `,'
-    \alt{} <synonyms> <synonym>
+    \alt <synonyms> <synonym> `,'
+    \alt <synonyms> <synonym>
 
     <wd> $\to$ <ID>
 
@@ -128,11 +126,10 @@ As an example, a dictionary can be written like this:
 Encapsulamento : Um mecanismo da linguagem para
                  restringir o acesso aos componentes
                  de um objecto.
-               | Encapsulation
-               | Modularidade
+               | Encapsulation | Modularidade
                ;
 
-Imutabilidade : Uma propriedade de informação que
+               Imutabilidade : Uma propriedade de informação que
                 implica que esta não pode ser alterada.
               | Imutability
               | [ Constante, Inalteravel, ]
@@ -141,10 +138,10 @@ Imutabilidade : Uma propriedade de informação que
 
 \inputminted[firstline=17,lastline=36]{C}{../src/sati.y}
 
-\section{Texts}
+\section{Texts}\label{sec:texts}
 
 The texts section is composed of texts that may or may not have a title, the
-title is used to name the \LaTeX{} chapter, if no title is given then
+title is used to name the \LaTeX chapter, if no title is given then
 \textit{Untitled X} will be used where \textit{X} is the number of untitled
 texts parsed so far.
 
@@ -153,14 +150,14 @@ preceding the text. The language specification for presenting the texts is the
 following:
 
 \begin{grammar}
-<texts> $\to$ `\"' <text> `\"'
-      \alt{} <texts> `\"' <text> `\"'
-      \alt{} <texts> <title> `\"' <text> `\"'
-      \alt{} <title> `\"' <text> `\"'
+    <texts> $\to$ `\"' <text> `\"'
+    \alt <texts> `\"' <text> `\"'
+    \alt <texts> <title> `\"' <text> `\"'
+    \alt <title> `\"' <text> `\"'
 
-<text> $\to$ <TEXT>
+    <text> $\to$ <TEXT>
 
-<title> $\to$ <TEXT>
+    <title> $\to$ <TEXT>
 \end{grammar}
 
 And a sample text section could be:
@@ -185,19 +182,111 @@ Encapsulamento : Um mecanismo da linguagem para
                | Modularidade
                ;
 
-Imutabilidade : Uma propriedade de informação que
+               Imutabilidade : Uma propriedade de informação que
                 implica que esta não pode ser alterada.
               | Imutability
               | [ Constante, Inalteravel, ]
               ;
-%%
-POO "O encapsulamento permite uma maior modularidade e organização do código."
-"Em programação é muito importante o single responsability principle."
+              %%
+              POO "O encapsulamento permite uma maior modularidade e organização do código."
+              "Em programação é muito importante o single responsability principle."
 \end{verbatim}
+
+\subsection{Lexing}
+
+To obtain all the literals and terminal tokens (\texttt{ID} and \texttt{TEXT})
+a lexer was written in \textit{flex}. Here the same two zones (\textit{Dicl}
+and \textit{Texts}) were used, where \textit{Dicl} is the \texttt{INITIAL}
+state and \textit{Texts} is \texttt{TEXTS} state. When the sequence of `\%' is
+found the lexer switches state and returns the `\%'. In this manner we can see
+what characters can not be part of each of the terminal symbols. For the
+\texttt{ID} we see that the symbols \verb!% ; , " [ ] : |! cannot be used. And
+for \texttt{TEXT} `\verb!"!' cannot be used, the latter can be fixed by
+replacing all `\verb!"!' with `\verb!``!', as \LaTeX interprets these as double
+quotes.
+
+\lstinputlisting[firstline=7,lastline=17,basicstyle=\footnotesize\ttfamily]
+{../src/sati.l}
 
 \section{Architecture}
 
-\section{Usability/Flags}
+The architecture is split in two parts, the parsing of the dictionary and the
+parsing mutation of the input texts.
+
+\begin{wrapfigure}{r}{5.5cm}
+    \centering
+    \input{struct.tex}
+    \caption{Structures}
+\end{wrapfigure}
+
+To achieve this, the following structures were designed: A word struct
+that represents each word in the dictionary, and the main \texttt{Sati} struct
+that stores the dictionary as well as some extra information.
+
+The \texttt{Word} struct is pretty self-explanatory. It contains the same fields
+as the ones described by the language. The word itself, its meaning, the
+English name, and a list of synonyms.
+
+The \texttt{Sati} struct is a bit more complex. First and foremost it has a
+\texttt{dictionary} that stores the \texttt{Word}s associated with the word
+(String). Then it has the \texttt{current\_word} field, (this will be
+explained more in depth in SubSection~\ref{ssec:parsing-the-dict}), but it
+keeps track of the word that is being currently parsed. Next comes the
+\texttt{untitled\_number}, this serves to count the number of untitled posts in
+order to produce the behaviour described in Section~\ref{sec:texts}. And
+finally, the \texttt{output} field, which stores the file where to output the
+content, this is the standard output, by default, but can be changed with the
+flags documented in Chapter~\ref{cha:flags}.
+
+\subsection{Parsing the dictionary}\label{ssec:parsing-the-dict}
+
+To parse the dictionary 2 elements of the \texttt{Sait} struct are used, the
+\texttt{dictionary} and the \texttt{current\_word}, when a new word is added
+it's added to the \texttt{dictionary} and the key is stored in
+\texttt{current\_word}, then, when a meaning, English name or synonym is added
+the \texttt{current\_word} is used to access the \texttt{dictionary} and update
+corresponding field.
+
+In Figure~\ref{fig:flow} \texttt{current\_word} is abbreviated to \texttt{cw}
+for brevity.
+
+\begin{figure}[H]
+    \centering
+    \input{flow.tex}
+    \caption{Dictionary building flowchart}\label{fig:flow}
+\end{figure}
+
+\subsection{Parsing the texts}
+
+\begin{wrapfigure}{r}{5.5cm}
+    \centering
+    \input{flow2.tex}
+    \caption{Parsing and building text}
+\end{wrapfigure}
+
+After the dictionary is parsed, the texts start being produced. This procedure
+is relatively simple, a text is sent along with it's title to the \texttt{Sati}
+module and every occurrence of a word is changed to include a footnote with
+the information in the \texttt{dictionary}.
+
+The outcome of this function is the production of a \LaTeX chapter titled
+either ``\textit{Untitled X}'' (where \textit{X} is the
+\texttt{untitled\_number}) or the passed title.
+
+To find the words that needed to be annotated the text was split on spaces,
+this came with another problem, sometimes words are followed by punctuation
+instead of spaces and thus the `Map' can't find it. For example, ``word.'' is
+not in the dictionary but ``word'' is, to solve this I made use of
+\textit{Rust}'s String library, which allows for, amongst other things, trim
+the start and end of a string of non alphanumeric characters in a UTF-8 aware
+way\footnote{\href{https://doc.rust-lang.org/std/primitive.str.html\#method.trim_start_matches}{Rust Docs}}.
+
+And finally, the texts are flushed to the file after being parsed, as to not
+allocate unnecessary memory.
+
+\chapter{Usability/Flags}\label{cha:flags}
+
+The program has a few flags documented in it's man page.
 
 \chapter{Conclusion}
 

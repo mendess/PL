@@ -1,0 +1,18 @@
+\tikzstyle{struct}=[fill=white, draw=black, rectangle, drop shadow, minimum height=2.5cm, minimum width=2.7cm]
+\begin{tikzpicture}[font=\ttfamily,auto]
+    \node (Sati) [struct]{\textcolor{MidnightBlue}{\textbf{Sati}}};
+
+    \node[above= of Sati] (ParserBot) {};
+    \node[above=2cm of ParserBot] (ParserTop) {};
+    \node[above=0.8cm of ParserBot] (n) {Parser};
+
+    \draw[->, very thick] (ParserTop) to[bend left=70] (ParserBot);
+    \draw[->, very thick] (ParserBot) to[bend left=70] (ParserTop);
+
+    \draw (Sati.north west) -- (Sati.south west);
+
+    \draw[->, thick] (ParserBot) -- node {parse\_text(title, text)} (Sati.north);
+
+    \draw[->, very thick] (Sati.south) -- ++(0,-1) node[below] (Output) {title.tex};
+
+\end{tikzpicture}
