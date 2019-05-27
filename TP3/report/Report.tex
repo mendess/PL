@@ -261,7 +261,7 @@ for brevity.
 \begin{wrapfigure}{r}{5.5cm}
     \centering
     \input{flow2.tex}
-    \caption{Parsing and building text}
+    \caption{Annotating a text using the \texttt{-s} flag}
 \end{wrapfigure}
 
 After the dictionary is parsed, the texts start being produced. This procedure
@@ -286,7 +286,16 @@ allocate unnecessary memory.
 
 \chapter{Usability/Flags}\label{cha:flags}
 
-The program has a few flags documented in it's man page.
+The program has a few flags documented in it's man page. These allow the user
+to control the input and output of the program.
+
+\begin{itemize}
+    \item \texttt{-o file}: Redirects the output the file specified as
+        parameter.
+    \item \texttt{-i file}: Redirects input to the file specified as parameter.
+    \item \texttt{-s}: Outputs each text in a separate file, with the same name
+        as the chapter title.
+\end{itemize}
 
 \chapter{Conclusion}
 

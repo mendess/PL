@@ -28,7 +28,7 @@ SATI_ERROR sati_add_synonym(Sati*, const char* synonym);
 
 void sati_dump(Sati*);
 
-SATI_ERROR sati_parse_text(Sati*, const char*, const char*);
+SATI_ERROR sati_annotate(Sati*, const char*, const char*);
 
 SATI_ERROR sati_end(Sati*);
 

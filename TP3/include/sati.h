@@ -15,8 +15,8 @@ void add_english_name(char*);
 
 void add_word(char*);
 
-void parse_text(char*);
+void annotate(char*);
 
-void parse_text_with_title(char*, char*);
+void annotate_with_title(char*, char*);
 
 #endif // SATI_H

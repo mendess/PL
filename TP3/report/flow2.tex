@@ -11,7 +11,7 @@
 
     \draw (Sati.north west) -- (Sati.south west);
 
-    \draw[->, thick] (ParserBot) -- node {parse\_text(title, text)} (Sati.north);
+    \draw[->, thick] (ParserBot) -- node {annotate(title, text)} (Sati.north);
 
     \draw[->, very thick] (Sati.south) -- ++(0,-1) node[below] (Output) {title.tex};
 

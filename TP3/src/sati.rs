@@ -115,7 +115,7 @@ impl Sati {
         Ok(())
     }
 
-    fn parse_text(&mut self, title: Option<String>, text: String) -> Result<(), SatiError> {
+    fn annotate(&mut self, title: Option<String>, text: String) -> Result<(), SatiError> {
         let text = text
             .split(' ')
             .map(|x| {
@@ -275,7 +275,7 @@ pub unsafe extern "C" fn sati_add_synonym(sati: *mut Sati, word: *const c_char) 
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn sati_parse_text(
+pub unsafe extern "C" fn sati_annotate(
     sati: *mut Sati,
     title: *const c_char,
     text: *const c_char,
@@ -286,7 +286,7 @@ pub unsafe extern "C" fn sati_parse_text(
     };
     let text = c_char_to_string(text);
     (&mut *sati)
-        .parse_text(title, text)
+        .annotate(title, text)
         .map(|_| 0)
         .unwrap_or_else(|x| x as i32)
 }
