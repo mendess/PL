@@ -39,6 +39,18 @@ debug: __debug_dir __output_dir $(GIC_OBJ_D) $(DEBUG_OBJECTS) target/debug/libsa
 $(DEBUG_OBJECTS): $(T_DEBUG)/%.o : $(SOURCES_DIR)/%.c
 	cc $(DEBUG) $(CFLAGS) -I$(HEADERS) -c $< -o $@
 
+install: release
+	sudo mkdir -p $(DESTDIR)/usr/local/bin/
+	sudo cp $(T_RELEASE)/sati $(DESTDIR)/usr/local/bin/
+	sudo mkdir -p $(DESTDIR)/usr/local/man/man1/
+	sudo cp assets/sati.1 $(DESTDIR)/usr/local/man/man1/
+	sudo mandb
+
+uninstall:
+	sudo rm $(DESTDIR)/usr/local/bin/sati
+	sudo rm $(DESTDIR)/usr/share/local/man/man1/sati.1
+	sudo mandb
+
 __lex: $(SOURCES_DIR)/sati.l
 	@mkdir -p $(T_GIC)
 	flex -o $(LEX_OUT) $<

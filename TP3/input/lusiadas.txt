@@ -2,6 +2,11 @@ Primeiro : O que vem antes dos outros
          | First
          | Precedente
          ;
+
+Lusitana : Do luso
+         | Lusitan
+         | Peninsula Hiberica
+         ;
 %%
 Canto I "
 
