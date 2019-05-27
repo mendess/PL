@@ -4,8 +4,6 @@ use std::fs::File;
 use std::io::{stdout, Write};
 use std::os::raw::{c_char, c_int};
 
-use itertools::Itertools;
-
 const HEADER: &str = include_str!("../assets/header.tex");
 const FOOTER: &str = include_str!("../assets/footer.tex");
 
@@ -116,19 +114,17 @@ impl Sati {
     }
 
     fn annotate(&mut self, title: Option<String>, text: String) -> Result<(), SatiError> {
-        let text = text
-            .split(' ')
-            .map(|x| {
-                match self.database.get(
-                    x.to_uppercase()
-                        .trim_start_matches(|c: char| !c.is_alphanumeric())
-                        .trim_end_matches(|c: char| !c.is_alphanumeric()),
-                ) {
+        let text = SplitPreserveWhitespace::new(&text)
+            .map_words(|x| {
+                match self
+                    .database
+                    .get(x.to_uppercase().trim_matches(char::is_alphanumeric))
+                {
                     Some(w) => format!("{}{}", x, w.to_footnote()),
                     None => x.to_string(),
                 }
             })
-            .join(" ");
+            .collect::<String>();
         match self.output.as_mut() {
             None => {
                 let filename = title.as_ref().map_or_else(
@@ -199,6 +195,72 @@ impl Word {
             self.english_name.as_ref().unwrap(),
             self.synonyms.join(", ")
             )
+    }
+}
+
+pub struct SplitPreserveWhitespace<'a> {
+    string: Option<Token<'a>>,
+}
+
+pub enum Token<'a> {
+    Whitespace(&'a str),
+    Other(&'a str),
+}
+
+impl<'a> SplitPreserveWhitespace<'a> {
+    fn new(string: &'a str) -> Self {
+        if string.is_empty() {
+            Self { string: None }
+        } else if string.starts_with(char::is_whitespace) {
+            Self {
+                string: Some(Token::Whitespace(string)),
+            }
+        } else {
+            Self {
+                string: Some(Token::Other(string)),
+            }
+        }
+    }
+
+    fn map_words<S>(self, mut f: S) -> std::iter::Map<Self, impl FnMut(Token<'a>) -> String>
+    where
+        S: FnMut(&str) -> String,
+    {
+        self.map(move |t: Token<'a>| match t {
+            Token::Other(s) => f(s),
+            Token::Whitespace(s) => s.to_string(),
+        })
+    }
+}
+
+impl<'a> Iterator for SplitPreserveWhitespace<'a> {
+    type Item = Token<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.string.take().map(|t| match t {
+            Token::Whitespace(s) => {
+                let (token, rest) = match s.find(|c: char| !c.is_whitespace()) {
+                    Some(i) => {
+                        let (a, b) = s.split_at(i);
+                        (a, Some(Token::Other(b)))
+                    }
+                    None => (s, None),
+                };
+                self.string = rest;
+                Token::Whitespace(token)
+            }
+            Token::Other(s) => {
+                let (token, rest) = match s.find(char::is_whitespace) {
+                    Some(i) => {
+                        let (a, b) = s.split_at(i);
+                        (a, Some(Token::Whitespace(b)))
+                    }
+                    None => (s, None),
+                };
+                self.string = rest;
+                Token::Other(token)
+            }
+        })
     }
 }
 
