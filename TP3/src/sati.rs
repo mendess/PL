@@ -8,7 +8,7 @@ const HEADER: &str = include_str!("../assets/header.tex");
 const FOOTER: &str = include_str!("../assets/footer.tex");
 
 pub struct Sati {
-    database: HashMap<String, Word>,
+    dictionary: HashMap<String, Word>,
     current_word: Option<String>,
     untitled_number: usize,
     output: Option<Box<dyn Write>>,
@@ -44,7 +44,7 @@ impl From<std::io::Error> for SatiError {
 impl Sati {
     fn new() -> Sati {
         Sati {
-            database: HashMap::new(),
+            dictionary: HashMap::new(),
             current_word: None,
             untitled_number: 0,
             output: Some(Box::new(stdout())),
@@ -53,7 +53,7 @@ impl Sati {
 
     fn new_with_output(file: File) -> Sati {
         Sati {
-            database: HashMap::new(),
+            dictionary: HashMap::new(),
             current_word: None,
             untitled_number: 0,
             output: Some(Box::new(file)),
@@ -62,7 +62,7 @@ impl Sati {
 
     fn new_split() -> Sati {
         Sati {
-            database: HashMap::new(),
+            dictionary: HashMap::new(),
             current_word: None,
             untitled_number: 0,
             output: None,
@@ -71,17 +71,17 @@ impl Sati {
 
     fn current_word(&mut self) -> Result<&mut Word, SatiError> {
         let cw = self.current_word.as_ref().ok_or(SatiError::NoCurrentWord)?;
-        Ok(self.database.get_mut(cw).unwrap())
+        Ok(self.dictionary.get_mut(cw).unwrap())
     }
 
     fn add_word(&mut self, word: String) -> Result<(), SatiError> {
-        if self.database.contains_key(word.as_str()) {
+        if self.dictionary.contains_key(word.as_str()) {
             Err(SatiError::WordAlreadyDefined)
         } else {
             let w = Word::new(word);
             let key = w.wd.to_uppercase();
             self.current_word = Some(key.clone());
-            self.database.insert(key, w);
+            self.dictionary.insert(key, w);
             Ok(())
         }
     }
@@ -116,10 +116,10 @@ impl Sati {
     fn annotate(&mut self, title: Option<String>, text: String) -> Result<(), SatiError> {
         let text = SplitPreserveWhitespace::new(&text)
             .map_words(|x| {
-                match self
-                    .database
-                    .get(x.to_uppercase().trim_matches(char::is_alphanumeric))
-                {
+                match self.dictionary.get(
+                    x.to_uppercase()
+                        .trim_matches(|c: char| !c.is_alphanumeric()),
+                ) {
                     Some(w) => format!("{}{}", x, w.to_footnote()),
                     None => x.to_string(),
                 }
@@ -158,10 +158,10 @@ impl Sati {
     }
 
     fn dump(&self) {
-        for v in self.database.values() {
+        for (k, v) in self.dictionary.iter() {
             eprintln!(
                 "{} : {}",
-                v.wd,
+                k,
                 v.meaning.as_ref().unwrap_or(&"\"\"".to_string())
             );
             eprintln!(
