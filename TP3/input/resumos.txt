@@ -1,0 +1,1488 @@
+Declaração : Definição do nome e tipo de uma variavel.
+           | Declaration
+           | Definição
+           ;
+Herança : Herança é um princípio de orientação a objetos que permite que classes compartilhem atributos e métodos.
+        | Inheritance
+        | Sem sinónimos
+        ;
+Classe : Unidade de código que associa dados a comportamento.
+       | Class
+       | Object
+       ;
+Metodo : Função associada a uma classe
+       | Method
+       | [ Comportamento, Função ]
+       ;
+Estende : Uma classe estende outra quando é subclasse desta herdando os seus atributos.
+        | Extend
+        | [ Subclasse, Herda ]
+        ;
+%%
+Anatomia de uma classe "
+
+Notas:
+\begin{itemize}
+ \item Código entre [ ] é opcional. Ou seja, fica ao teu critério se é necessário.
+ \item As palavras 'MyClass', 'XClass', 'SuperClass' e 'InterfaceClass' são apenas exemplificativas.
+\end{itemize}
+
+
+\subsection{Declaração}
+
+Nesta declaração indicamos o nome da nossa class, se estende uma classe e se, e quais, interfaces implementa.
+\begin{verbatim}
+public class MyClass [extends SuperClass] [implements InterfaceClass, ...] {
+\end{verbatim}
+
+\subsection{Variáveis de instância}
+Estas devem ser sempre \verb!private! para garantir o encapsulamento do estado
+interno do objeto.
+\begin{verbatim}
+    private int num;
+    private String nome;
+    private XClass outraCena;
+    private ArrayList<String> nomes;
+    private ArrayList<XClass> outrasCenas;
+\end{verbatim}
+\subsection{Construtores}
+Os construtores permitem instanciar novos objetos da classe. Devem inicializar todos as variáveis de instância.
+
+\subsubsection{Construtor vazio}
+Este construtor inicializa as variáveis de instância com valores por defeito.
+\begin{verbatim}
+    public MyClass(){
+        this.num = 0;
+        this.nome = ````;
+        this.outraCena = new XClass();
+        this.nomes = new ArrayList<>();
+        this.outrasCenas = new ArrayList<>();
+    }
+\end{verbatim}
+
+\subsubsection{Construtor parameterizado}
+Este construtor recebe como parâmetro os valores que as variáveis de instância
+ devem tomar.
+
+\textit{(Nota: Uma classe pode ter mais variáveis de instância do que os parâmetros passados neste tipo de construtor, caso, por exemplo, uma destas tenha um valor derivado de outras variáveis.)}
+
+As diferentes atribuições feitas neste construtor são explicadas através dos
+ getters/setters mais à frente.
+\begin{verbatim}
+    public MyClass(int num, String nome, XClass outraCena,
+                    ArrayList<String> nomes, ArrayList<XClass> outrasCenas){
+        this.num = num;
+        this.nome = nome;
+        this.outraCena = outraCena.clone();
+        this.nomes = new ArrayList<>(nomes);
+        this.outrasCenas = new ArrayList<>();
+        for(XClass cena: outrasCenas){
+            this.outrasCenas.add(cena.clone());
+        }
+    }
+\end{verbatim}
+
+\subsubsection{Construtor de cópia}
+Este construtor permite criar uma cópia exata de outra instância deste objeto.
+
+\textit{(Nota: Este construtor assume que todos os getters clonam corretamente as variáveis de instância que retornam.)}
+\begin{verbatim}
+    public MyClass(MyClass myClass){
+        this.num = myClass.getNum();
+        this.nome = myClass.getNome();
+        this.outraCena = myClass.getOutraCena();
+        this.nomes = myClass.getNomes();
+        this.outrasCenas = myClass.getOutrasCenas();
+    }
+\end{verbatim}
+
+\subsection{Getters}
+Os getters permitem aceder às variáveis de instância de uma instância da nossa
+ classe. Devem ser \verb!public! apenas os que queremos que seja possível aceder.
+
+\subsubsection{Get de uma variável de tipo primitivo}
+As variáveis são 'passed by value', ou seja, o seu valor é copiado. Logo, este get é simples.
+
+(Irá ficar mais claro mais a frente.)
+\begin{verbatim}
+    public int getNum(){
+        return this.num;
+    }
+\end{verbatim}
+
+\subsubsection{Get de um objeto imutável}
+Uma string é imutável, logo retornar um apontador para este objeto que pertence ao estado interno
+no nosso objeto não tem problema.
+\begin{verbatim}
+    public String getNome(){
+        return this.nome;
+    }
+\end{verbatim}
+
+\subsubsection{Get de um objeto mutável}
+Um objeto mutável deve ser clonado para manter o encapsulamento. Se este objeto fosse alterado
+fora da instância que o retornou, implicaria alterar o estado interno da mesma instância.
+
+(Porque a variável é 'passed by value' e esta, na verdade, é um apontador.)
+\begin{verbatim}
+    public XClass getOutraCena(){
+        return this.outraCena.clone();
+    }
+\end{verbatim}
+
+\subsubsection{Get de uma lista de objetos imutáveis}
+Tem que se criar uma lista nova. Apesar de cada objeto individual da lista ser imutável, a lista
+em si, não é imutável. Logo, se retornarmos a lista diretamente, novos valores podem ser adicionados
+à mesma, alterando o estado interno da instância a partir do exterior.
+
+Para isto, podemos fazer uso do construtor da \verb!ArrayList! que recebe uma \verb!Collection! e copia os valores.
+
+\textbf{\textit{ATENÇÃO: SÓ PODEMOS USAR ESTE construtor PARA LISTAS DE objetos IMUTÁVEIS}}
+\begin{verbatim}
+    public ArrayList<String> getNomes(){
+        return new ArrayList<>(this.nomes);
+    }
+\end{verbatim}
+Ou
+\begin{verbatim}
+    public ArrayList<String> getNomes(){
+        return this.nomes.clone();
+    }
+\end{verbatim}
+
+\subsubsection{Get de uma lista de objetos mutaveis}
+Como no get anterior, tem que ser criada uma nova lista. Mas, os elementos ao serem adicionados à mesma,
+têm que ser clonados.
+\begin{verbatim}
+    public ArrayList<XClass> getOutrasCenas(){
+        ArrayList<XClass> newOCenas = new ArrayList<>();
+        for(XClass cena: this.outrasCenas){
+            newOCenas.add(cena.clone());
+        }
+        return newOCenas;
+    }
+\end{verbatim}
+
+\subsection{Setters}
+Os setters seguem o mesmo princípio dos getters. Objetos imutáveis e tipos primitivos
+não têm que ser clonados, tudo o resto sim.
+\begin{verbatim}
+    public void setNum(int num){
+        this.num = num;
+    }
+
+    public void setNome(String nome){
+        this.nome = nome;
+    }
+
+    public void setOutraCena(XClass outraCena){
+        this.outraCena = outraCena.clone();
+    }
+
+    public void setNomes(ArrayList<String> nomes){
+        this.nomes = new ArrayList<>(nomes);
+    }
+
+/*  OU assim
+    public void setNomes(ArrayList<String> nomes){
+        this.nomes = nomes.clone();
+    }
+*/
+
+    public void setOutrasCenas(ArrayList<XClass> cenas){
+        ArrayList<XClass> newCenas = new ArrayList<>();
+        for(XClass cena: cenas){
+            newCenas.add(cena.clone());
+        }
+        this.outrasCenas = newCenas;
+    }
+\end{verbatim}
+\textit{Nota: Setters de uma lista nem sempre fazem sentido. Dependendo do contexto, pode fazer mais sentido implementar métodos que adicionem ou removam elementos às listas.}
+
+\subsection{Métodos ``obrigatórios'' de definir.}
+Estes métodos devem ser definidos para todas as classes que sejam criadas. Salvo exceções em que
+sejam inúteis.
+
+\subsubsection{equals}
+O equals é o mais importante, e raramente é inútil.
+\begin{verbatim}
+    public boolean equals(Object o){
+/*[1]*/ if(this == o) return true;
+
+/*[2]*/ if(o == null || this.getClass() != o.getClass())
+            return false;
+
+/*[3]*/ MyClass that = (MyClass) o;
+/*[4]*/ return this.num == that.getNum()
+            && this.nome.equals(that.getNome())
+            && this.outraCena.equals(that.getOutraCena())
+            && this.nomes.equals(that.getNomes())
+            && this.outrasCenas.equals(that.getOutrasCenas());
+    }
+\end{verbatim}
+Análise do código:
+\begin{itemize}
+ \item Compara-se os apontadores. Se forem iguais, sabemos que o objeto é o mesmo.
+ \item Verifica-se se o objeto é null ou se as classes entre eles são diferentes. Qualquer uma destas
+ \item indica que não são iguais.
+ \item Faz-se o cast para se poder chamar métodos.
+ \item Verifica-se se todos os elementos da classe são iguais.
+ \begin{itemize}
+    \item Para tipos primitivos podemos comparar normalmente com \verb!==!.
+    \item Para classes chamamos o \verb!equals! das mesmas.
+ \end{itemize}
+\end{itemize}
+
+\subsubsection{toString}
+O toString é importante para efeitos de debug. Pode também ser adaptado para aplicações de terminal.
+\begin{verbatim}
+    public String toString(){
+        StringBuffer sb = new StringBuffer(``MyClass: ``);
+        sb.append(``Num: ``).append(this.num).append(``, ``);
+        sb.append(``Nome: ``).append(this.nome).append(``, ``);
+        sb.append(``Outra Cena: ``).append(this.outraCena).append(``, ``);
+        sb.append(``Nomes: ``).append(this.nomes).append(``, ``);
+        sb.append(``Outras Cenas: ``).append(this.outrasCenas).append(``, ``);
+        return sb.toString();
+    }
+\end{verbatim}
+
+\subsubsection{Clone}
+O clone deve ser implementado porque o Nestor diz que sim. Objetos imutáveis não devem
+ implementar este método.
+\begin{verbatim}
+    public MyClass clone(){
+        return new MyClass(this);
+    }
+\end{verbatim}
+
+
+---
+Lista dos principais objetos imutáveis disponíveis:
+\begin{itemize}
+ \item Integer
+ \item Float
+ \item Double
+ \item Char
+ \item Boolean
+ \item String
+ \item LocalDate
+ \item LocalTime
+ \item LocalDateTime
+\end{itemize}
+(existem mais)"
+Collections "
+As collections de Java permitem-nos abstrair o comportamento habitual de guardar os nosso objetos em
+ arrays, arvores, hastables, etc. Estes padrões de programação são tão comuns que não vale a pena estar
+ sempre a definilos.
+
+Neste documento vou falar de \verb!Collection! e \verb!Map!, que não é uma collection mas serve um proposito similar.
+
+\textit{Nota: Este resumo assume que os conceitos de Hierarquia de Classes estão bem compreendidos.}
+
+\textit{Nota: Este resumo apenas apresenta uma reduzida lista de classes e metodos de forma exemplificativa. Existem muitas mais classes e metodos.}
+
+\section{Hierarquia de classes das collections}
+A API das Collections disponibiliza as seguintes classes: (Existem mais, este é apenas um pequeno exemplo)
+
+\pagebreak
+\begin{verbatim}
+                                  +-------------------------------+
+                    +------------>|        Collection<E>          |
+                    |             +-------------------------------+
+                    |                ^                          |
+                    |                |                          |
+                    |                |                          |
+               +---------+      +----------+                    |
+      ++======>| List<E> |      | Queue<E> |<=====++            |
+      ||       +---------+      +----------+      ||            |
+      ||             ^^            ^^             ||            |
+      ||             ||            ||             ||            |
+      ||             ||            ||             ||            |
+++==============++  ++===============++ ++==================++  |
+|| ArrayList<E> ||  || LinkedList<E> || || PriorityQueue<E> ||  |
+++==============++  ++===============++ ++==================++  |
+                                                                |
+                                                                |
+                                                                |
+                                 ++============++          +--------+
+                                 || HashSet<E> ||<=========| Set<E> |
+                                 ++============++          +--------+
+                                        ^                       ^^
+                                        |                       ||
+                                        |                       ||
+                             ++==================++    +--------------+
+                             || LinkedHashSet<E> ||    | SortedSet<E> |
+                             ++==================++    +--------------+
+                                                              ^^
+                                                              ||
+                                                              ||
+                                                         ++============++
+                                                         || TreeSet<E> ||
+                                                         ++============++
+Legenda:
+++==++                        ^^  ==>
+||  ||  -> Class              ||       -> Implements
+++==++                        ||
+
++----+                         ^ -->
+|    |  -> Interface           |       -> Extends
++----+                         |
+\end{verbatim}
+
+Podemos consultar a documentação de todas estas para saber que metodos temos disponiveis:
+
+\subsection{Collection}
+A interface \verb!Collection! garante que todas as classes que a implementam disponibilizam,
+ entre outros, metodos para adicionar, verificar a existencia e remover elementos.
+
+\begin{itemize}
+\item \verb!boolean add(E e)!
+\item \verb!boolean remove(E e)!
+\end{itemize}
+
+Ambos retornando \verb!true! se o estado da collection foi alterado.
+
+\begin{itemize}
+    \item \verb!boolean contains(Object o)!
+\end{itemize}
+
+Que retorna \verb!true! case o objecto esteja contido na coleção.
+
+\subsection{List}
+Esta interface que estende a \verb!Collection! adiciona, entre outros, metodos com a noção de indice,
+ muito analogo a um array:
+
+\begin{itemize}
+    \item \verb!int indexOf(Object o)! Que retorna o indice de um determinado objecto
+    \item \verb!E get(int index)! Que retorna o objecto que está num dado indice
+    \item \verb!boolean remove(int index)! Que remove um objecto num dado indice
+\end{itemize}
+
+\subsection{ArrayList}
+A implementação de lista mais usada é o ArrayList. Este exibe o comportamento de um array dinâmico.
+Disponibilizando assim metodos que esperamos encontrar numa lista que herda."
+Map "
+Um map, ou dicionario, server para guardar pares chave-valor. Efetivamente são uma Hash Table.
+
+\section{Hierarquia de classes do Map}
+A API do Map disponibiliza as seguintes classes: (Existem mais, este é apenas um pequeno exemplo)
+\begin{verbatim}
+                       +----------------------+
+             ++=======>|       Map<K,V>       |<---------+
+             ||        +----------------------+          |
+             ||                                          |
+    ++================++                        +-------------------+
+    ||  HashMap<K,V>  ||                        |   SortedMap<K,V>  |
+    ++================++                        +-------------------+
+              ^                                          ^
+              |                                          |
+              |                                 +-------------------+
+   ++====================++                     | NavigableMap<K,V> |
+   || LinkedHashMap<K,V> ||                     +-------------------+
+   ++====================++                              ^^
+                                                         ||
+                                                ++=================++
+                                                ||   TreeMap<K,V>  ||
+                                                ++=================++
+\end{verbatim}
+
+\subsection{Map API}
+A interface \verb!Map! garante que todas as classes que a implementam disponibilizam,
+ entre outros, metodos para adicionar, verificar a existenciai, obter e remover
+ elementos
+
+\begin{itemize}
+ \item \verb!boolean put(K key, V value)!
+ \item \verb!boolean containsKey(Object key)!
+ \item \verb!V get(K key)!
+ \item \verb!V remove(K key)!
+\end{itemize}
+
+Outros metodos importantes são:
+
+\begin{itemize}
+ \item \verb!Set<K> keySet()! para obter o conjunto das chaves.
+ \item \verb!Collection<V> values()! para obter uma coleção de valores do map.
+ \item \verb!Set<Map.Entry<K,V>> entrySet()! que devolve um conjunto de pares chave-valor.
+\end{itemize}
+
+Importante notar que estes metodos podem ter fraco desempenho em algumas
+ implementações da interface, por exemplo \verb!HashMap!, devido à ineficiencia
+ de interar sobre este tipo de estruturas. Por esta razão, Map não implementa
+ \verb!Iterable!."
+Comparable e Comparators "
+
+Um comparator serve para definir um critério pelo qual se podem
+ comparar duas classes. Este tipo de comparações são normalmente usadas
+ ordenar elementos de uma lista ou inserir corretamente numa arvore de
+ procura.
+
+Durante este resumo vai ser varias vezes referenciada a seguinte classe:
+\begin{verbatim}
+public class Aluno{
+    private String nome;
+    private int nota;
+    /* construtores e getter/setters */
+}
+\end{verbatim}
+
+\subsection{Comparators I}
+
+Para criar um comparator temos apenas de defninir uma classe que
+ implemente Comparator.
+
+Se quisermos ordenar por ordem de notas, criamos o seguinte comparator.
+\begin{verbatim}
+public class AlunoComparator implements Comparator<Aluno>{
+    public int compare(Aluno a1, Aluno a2){
+        return Integer.compare(a1.getNota(), a2.getNota());
+    }
+}
+\end{verbatim}
+Os tipos basicos (\verb!int!, \verb!float!, \verb!double!, ...) já tem definidos na
+respetiva classe metodos para os comparar.
+
+\subsubsection{Utilização}
+
+\paragraph{Metodo}
+
+Para o utilizar apenas temos de o passar a algum metodo ou construtor
+que necessite de um.
+\begin{verbatim}
+List<Aluno> alunosPorNota = new ArrayList<>();
+// inserir montes de alunos
+alunosPorNota.sort(new AlunoComparator());
+\end{verbatim}
+Neste caso o metodo sort ira ordenar por ordem crescente de notas
+os alunos da lista.
+
+Se quisermos ordenar pela ordem inversa podemos utilizar o metodo
+reversed disponibilizado por defeito em todos os \verb!Comparator!s
+\begin{verbatim}
+alunosPorNota.sort(new AlunosComparator().reversed());
+\end{verbatim}
+
+\paragraph{Construtor}
+
+Para criar um SortedSet, neste caso, temos de passar um comparator
+ ao criar uma instancia.
+\begin{verbatim}
+SortedSet<Aluno> alunos = new TreeSet<>(new AlunoComparator());
+\end{verbatim}
+Assim sempre que for adicionado um novo aluno a este TreeSet este
+ irá ser inserido de forma ordenada.
+
+\subsection{Comparators II}
+
+Em vez de criarmos uma classe nova para comparar objectos de uma outra
+ classe podemos também criar comparators com \verb!lambdas! e outros
+ metodos pre-definidos.
+
+\subsubsection{Utilização}
+
+\paragraph{Metodo}
+
+Utilizando a classe da secção anterior, os alunos podem ser ordenados
+ das seguintes formas.
+
+\begin{itemize}
+ \item Usando um comparator de inteiros pre-definido na classe comparator,
+ ao qual temos apenas de passar um metodo que retorna o valor a
+ comparar.
+\begin{verbatim}
+alunosPorNota.sort(Comparator.comparingInt(Aluno::getNota));
+alunosPorNome.sort(Comparator.comparing(Aluno::getNome)); //O resultado do metodo tem de ser
+                                                          //comparable (ver secção seguinte)
+\end{verbatim}
+ \item Usando um lambda que compare dois objectos.
+\begin{verbatim}
+alunosPorNota.sort((a1, a2) -> Integer.compare(a1.getNota(), a2.getNota()));
+\end{verbatim}
+\end{itemize}
+
+O primeiro pode também ser invertido.
+\begin{verbatim}
+alunosPorNota.sort(Comparator.comparingInt(Aluno::getNota).reversed());
+\end{verbatim}
+
+\subsection{Comparable ou ``ordem natural''}
+
+Outro metodo de comparar objectos de uma classe é fazer essa classe comparavel.
+
+\paragraph{Metodo}
+
+Podemos definir que, por defeito, os Alunos podem ser comparados por nome
+implementando a interface Comparable, que obriga à implementação
+do metodo compareTo.
+\begin{verbatim}
+public class Aluno implements Comparable<Aluno> {
+    private String nome;
+
+    public int compareTo(Aluno aluno){
+        return this.nome.compareTo(aluno.getNome());
+    }
+\end{verbatim}
+\textbf{Nota:} As strings são \verb!Comparable!.
+
+Podemos agora ter uma lista ordenada por nome da seguinte forma:
+\begin{verbatim}
+alunosPorNome.sort(Comparator.naturalOrder());
+\end{verbatim}
+
+\paragraph{Construtor}
+
+Agora que \verb!Aluno! é Comparable podemos criar uma estrutura ordenada
+sem nos preocuparmos com o comparator::
+\begin{verbatim}
+SortedSet<Aluno> alunos = new TreeSet<>();
+\end{verbatim}
+
+\section{Extra Notes}
+
+1. Para inverter o lambda temos de expandi-lo para o que ele verdadeiramente é:
+    \verb!!`Java
+    alunosPorNome.sort((new Comparator<Aluno>() {
+        @Override
+        public int compare(Aluno a1, Aluno a2){
+            return a1.getNome().compareTo(a2.getNome());
+        }
+    }).reversed());
+    \verb!!`
+    A isto chama-se uma classe anónima, que faz uso da interface
+    funcional \verb!Comparator!."
+
+Exceptions "
+
+Exceptions são uma ferramenta usada para realizar controlo de erros. Enquanto que
+em \verb!C! quase todos os erros que ocorrem dão origem a uma \verb!Segmentation Fault!
+genérica, quando trabalhamos com uma linguagem orientada a objectos é costume
+usar exceptions que transmitem mais informação.
+
+\section{Tipos de exceptions}
+A classe abstracta que todos os erros e exceções devem estender é
+Throwable. Depois desta temos 2 sub-tipos:
+
+\begin{itemize}
+    \item \textbf{Error} Que são erros que muitas vezes não podem ser tratados, por exemplo:
+    \begin{itemize}
+        \item OutOfMemoryError
+    \end{itemize}
+    \item \textbf{Exception} Que são exceções do funcionamento normal e devem ser tratados. Estas ainda se sub-dividem em mais dois tipos:
+    \begin{itemize}
+        \item RuntimeExceptions
+        \item \textit{Checked exceptions}
+    \end{itemize}
+
+    A única diferença entre estas é que as \textit{Checked Exceptions} tem de ser
+    declaradas na assinatura do metodo, enquanto que as \verb!RuntimeExceptions!
+    não. Exemplos de \verb!RuntimeExceptions! são:
+    \verb!NullPointerException! e \verb!ArrayOutOfBoundsException!.
+\end{itemize}
+
+\section{Exceptions mais comuns}
+A exceção mais comum é NullPointerException que ocorre sempre
+que se tenta aceder a uma variavel cujo valor seja \verb!null!.
+
+\subsection{Exemplo:}
+\begin{verbatim}
+1 public class ExampleClass{
+2     public static void main(String[] args){
+3         String s = null;
+4         System.out.println(s.length());
+5     }
+6 }
+\end{verbatim}
+Irá produzir o seguinte output no terminal:
+\begin{verbatim}
+Exception in thread ``main`` java.lang.NullPointerException
+    at ExampleClass.main(ExampleClass.java:4)
+\end{verbatim}
+Como podemos ver o nome completo da exception é \verb!java.lang.NullPointerException!,
+a classe em que ocorreu e o metodo \verb!ExampleClass.main! e o ficheiro e respetiva
+linha de código \verb!ExampleClass.java:4!
+
+\section{Propagação de exceções por metodos}
+Quando uma exceção ocorre, se não for tratada, ira interromper a execução do
+metodo imediatamente e subir até que atinja um ponto em que seja tratada ou que
+não possa subir mais, o que normalmente faz com que o programa termine, como
+foi o caso do exemplo anterior.
+
+\begin{verbatim}
+  1 public class ExampleClass{
+  2     public static void main(String[] args){
+  3         String s = null;
+  4         System.out.println(``Hello``);
+  5         printStringLength(s);
+  6         System.out.println(``Still running``);
+  7     }
+  8     public static void printStringLength(String s){
+  9         System.out.print(s.length());
+ 10         System.out.println(`` characters``);
+ 11     }
+ 12 }
+\end{verbatim}
+
+Irá produzir o seguinte output no terminal:
+
+\begin{verbatim}
+Hello
+Exception in thread ``main`` java.lang.NullPointerException
+    at ExampleClass.printStringLength(ExampleClass.java:9)
+    at ExampleClass.main(ExampleClass.java:5)
+\end{verbatim}
+
+Como podemos ver a exceção gerada no metodo \verb!printStringLength! originou na linha
+9 e, como consequência, a linha 10 não foi executada. Da mesma forma a linha 6 da
+ \verb!main()! não foi executada pois a exceção foi propagada para esta. Como neste
+ponto a exceção não foi tratada causou a interrupeção por completo do programa.
+
+\section{Try/catch}
+Para tratar uma exceção temos ao nosso dispor a sintaxe do \verb!try{}catch()!.
+\begin{verbatim}
+try{
+    /* try block: codigo que possa produzir uma exceção */
+} catch (NullPointerException e) {
+    /* catch block: tratar exceção */
+}
+/\textit{Resto do metodo}/
+\end{verbatim}
+Assim sempre que codigo dentro do \verb!try! block lançar uma \verb!NullPointerException!
+ira imediatamente saltar para o \verb!catch! block e depois continuar pelo \textbf{/*Resto do metodo*/} sem que o interrompa.
+
+Aplicando isto ao exemplo anterior:
+\begin{verbatim}
+  1 public class ExampleClass{
+  2     public static void main(String[] args){
+  3         String s = null;
+  4         System.out.println(``Hello``);
+  5         printStringLength(s);
+  6         System.out.println(``Still running``);
+  7     }
+  8     public static void printStringLength(String s){
+  9         try{
+ 10             System.out.print(s.length());
+ 11         }catch(NullPointerException e){
+ 12             System.out.print(``0``);
+ 13         }
+ 14         System.out.println(`` characters``);
+ 15     }
+ 16 }
+\end{verbatim}
+Irá produzir o seguinte output no terminal:
+\begin{verbatim}
+Hello
+0 characters
+Still running
+\end{verbatim}
+Como podemos ver todas as linhas de código foram executadas apesar da exceção ter
+sido lançada pela linha 10.
+
+\section{Criar uma nova exceção}
+Muitas vezes a nossa aplicação tem os seus erros especificos que tem de tratar,
+nesse caso será boa ideia criar as nossas próprias exceções.
+
+Uma exceção é um objecto, e como todos os objectos é definido por uma classe.
+
+\begin{verbatim}
+public class MyException extends Exception{
+
+}
+\end{verbatim}
+Isto é suficiente para criar uma exceção simples. A invocação do \verb!super! está
+implicita.
+
+Para lancar esta exceção, assim como qualquer outra, usamos a \textit{keyword} \verb!throw!.
+
+\begin{verbatim}
+public method() throws MyException{
+    /\textit{ code }/
+    if(someError){
+        throw new MyException();
+    }
+    /\textit{ more code }/
+}
+\end{verbatim}
+Um \verb!throw! tem o mesmo impacto na execução que um \verb!return!, ou seja, se um
+\verb!throw! for executado o metodo termina. Para além disto, se se tratar de uma
+\textit{Checked Exception}, tem de se sinalizar na assinatura do metodo que este lança
+uma exceção, para que quem o use esteja ciente dessa possibilidade e possa
+tratar o erro.
+
+\section{A Classe Throwable}
+A classe Throwable é a superclasse de todas as exceções e erros,
+apenas classes que extendam \verb!Throwable! podem ser lançadas por um \verb!throw! e
+tratadas por um \verb!catch!.
+
+A nossa exceção pode ter qualquer construtor que seja necessário, no entanto,
+seguir os construtores implementados pela classe \verb!Throwable! é o mais comun.
+
+\subsection{Exemplo}
+\begin{verbatim}
+public class MyException extends Exception{
+
+    public MyException(){ // Se nao incluirmos este constructor a nossa
+    }                     // exceção terá de ter sempre uma mensagem
+
+    public MyException(String message){
+        super(message);
+    }
+}
+\end{verbatim}
+Fazendo assim uso de um dos construtores da super classe.
+
+\begin{verbatim}
+public method() throws MyException{
+    /\textit{ code }/
+    if(someError){
+        throw new MyException(``Exceção feia :(``);
+    }
+    /\textit{ more code }/
+}
+\end{verbatim}"
+
+Hierarquia de classes "
+
+A hierarquia de classes tem imensas vantagens no que toca a manter a
+sanidade de quem programa.
+
+\textbf{Nota:} É assumido que há um getter definido corretamente para todas as
+variáveis de instância declaradas.
+
+\section{Situação exemplo}
+Imagina que precisamos de implementar um programa com alunos e professores.
+Poderíamos então implementar as seguintes classes:
+\begin{verbatim}
+public class Aluno{
+	private String num;
+	private String nome;
+	private String email;
+	private ArrayList<String> cadeiras;
+
+	public Aluno(String num, String nome, String email, List<String> cadeiras){
+		this.num = num;
+		this.nome = nome;
+		this.email = email;
+		this.cadeiras = new ArrayList<>(cadeiras);
+		//Um dos construtores de arraylist permite passar uma Collection.
+		//No entanto, é preciso ter cuidado pois este construtor não
+		// clona os elementos da lista, ou seja, so pode ser usado para
+		// listas de objetos imutáveis.
+	}
+	/\textit{ Getters, Setters, etc }/
+}
+
+public class Prof{
+	private String num;
+	private String nome;
+	private String email;
+	private String departamento;
+
+	public Prof(String num, String nome, String email, String departamento){
+		this.num = num;
+		this.nome = nome;
+		this.email = email;
+		this.departamento = departameto;
+	}
+	/\textit{ Getters, Setters, etc }/
+}
+\end{verbatim}
+No entanto, temos assim muito código duplicado. Variáveis repetidas,
+getters, setters, se for o caso, também teremos métodos iguais repetidos.
+
+O equals e o toString vão ser extremamente parecidos também.
+
+\section{Classe que agrupa o código comum}
+Uma primeira solução para o nosso problema é então agrupar as partes comuns
+numa só classe.
+\begin{verbatim}
+public class Pessoa {
+	private String num;
+	private String nome;
+	private String email;
+
+	public Pessoa(String num, String nome, String email){
+		this.num = num;
+		this.nome = nome;
+		this.email = email;
+	}
+	/\textit{ Getters, Setters, etc }/
+}
+\end{verbatim}
+Resta-nos apenas relacionar as nossas antigas classes com esta.
+Isto é muito simples. Mas tem alguns detalhes importantes a ter em conta,
+que falarei já a seguir.
+\begin{verbatim}
+public class Aluno extends Pessoa {
+	private ArrayList<String> cadeiras;
+
+	public Aluno(String num, String nome, String email, List<String> cadeiras){
+		super(num,nome,email);
+		this.cadeiras = new ArrayList<>(cadeiras);
+	}
+	/\textit{ Getters, Setters, etc }/
+}
+
+public class Prof extends Pessoa {
+	private String departamento;
+
+	public Prof(String num, String nome, String email, String departamento){
+		super(num,nome,email);
+		this.departamento = departameto;
+	}
+	/* Getters, Setters, etc */
+}
+\end{verbatim}
+A primeira palavra ('keyword') nova aqui é \verb!super!. Esta serve para fazer
+referência a símbolos (variáveis, métodos, etc) definidos na superclasse.
+
+Assim a linha \verb!super(...)! refere-se ao construtor da superclasse e evita-se
+assim repetir código, visto que aquela parte do construtor é igual para
+todas as subclasses de \verb!Pessoa!.
+
+Podemos também usar o super para chamar métodos da superclasse. O clássico
+exemplo é o equals.
+\begin{verbatim}
+public class Aluno extends Pessoa {
+	/* igual ao de cima */
+	public boolean equals(Object o){
+		if(this == o) return true;
+		if(o == null || this.getClass() != o.getClass())
+			return false;
+		Aluno that = (Aluno) o;
+		return super.equals(o)
+		    && this.cadeiras.equals(that.getCadeiras());
+	}
+}
+\end{verbatim}
+\subsection{Implicações desta construção do código}
+Pessoa é uma classe como outra qualquer. Podemos instancia-la e chamar-lhe
+os métodos que tem definido.
+\begin{verbatim}
+	Pessoa p = new Pessoa(``D99999``,``JBB``,``god@ghci.com``);
+	String num = p.getNum(); // funciona
+	ArrayList<String> cadeiras = p.getCadeiras(); // Não funciona, este getter não
+                                                     // está definido na classe Pessoa.
+\end{verbatim}
+\verb!Aluno! (e \verb!Prof!) podem também ser instanciados. E podemos chamar métodos
+ definidos na superclasse e métodos definidos na própria classe.
+\begin{verbatim}
+	Aluno a = new Aluno(``A12345``,``Mendes``,``mendes@mymail.com``, new ArrayList<>());
+	String num = a.getNum(); // Funciona. O getter está definido na superclasse
+				 // que esta extende.
+	ArrayList<String> cadeiras = a.getCadeiras();
+				// Funciona. O getter esta definido nesta classe.
+\end{verbatim}
+Mas a mais interessante consequência é a seguinte:
+\begin{verbatim}
+	Pessoa p = new Prof(``D54321``,``Nestor``,``nestor@clone.com``,``DI``);
+	String num = p.getNum(); //Funciona.
+	String departamento = p.getDepartamento();
+				// Não funciona. Um objecto do tipo Pessoa não tem
+				// este getter definido. Apesar do ``verdadeiro`` tipo
+				// da classe ser Prof.
+	Prof prof = (Prof) p;
+	String departamento = prof.getDepartamento();
+				// Funciona. Após o cast a JVM já consegue encontrar
+				// o método e chamá-lo.
+\end{verbatim}
+Este ``malabarismo'' de casts pode dar a entender que instanciar objetos desta
+forma é uma perda de tempo. Mas há uma muito boa razão para isto. Considere
+o seguinte exemplo:
+\begin{verbatim}
+	ArrayList<Aluno> alunos = new ArrayList<>();
+	alunos.add(new Aluno(...)); // Funciona.
+	alunos.add(new Prof(...)); // Não funciona.
+
+	ArrayList<Pessoa> pessoas = new ArrayList<>();
+	pessoas.add(new Aluno(...)); // Funciona. Alunos são Pessoas.
+	pessoas.add(new Prof(...)); // Funciona. Profs são Pessoas.
+\end{verbatim}
+Aqui vemos uma das mais comuns utilizações deste paradigma. Outro exemplo é o seguinte:
+\begin{verbatim}
+public class Cartao{
+	private Pessoa p;
+	public Cartao(Pessoa p){
+		this.p = p;
+	}
+}
+\end{verbatim}
+Esta classe pode ter, na sua variável de instância, uma \verb!Pessoa!, um \verb!Aluno!
+ou um \verb!Prof!.
+
+\subsubsection{Atenção}
+\begin{verbatim}
+	ArrayList<Pessoa> pessoas = new ArrayList<>();
+	// Adicionam-se montes de cenas a lista.
+	Pessoa p = pessoas.get(42);
+	Prof prof = (Prof) p; // Não funciona caso o tipo ``verdadeiro`` de p não seja Prof.
+\end{verbatim}
+Este código poderá lançar uma \verb!ClassCastException!. Este tipo de erros não
+podem ser detetados pelo compilador mas quando ocorrem crasham o programa.
+
+Para evitar isto, simplesmente temos de fazer uma simples verificação:
+\begin{verbatim}
+	if(p instanceof Prof){
+		Prof prof = (Prof) p;
+		/* Fazer cenas de prof */
+	}
+\end{verbatim}
+
+\section{Classes abstratas}
+Até agora tudo bem, mas há um problema com a nossa aplicação. Podem haver
+ instâncias de \verb!Pessoa!, que não fazem sentido no nosso contexto. (Ou se é
+Aluno ou se é Prof)
+
+Este problema é facilmente resolvido adicionando uma palavra na declaração
+de \verb!Pessoa!.
+\begin{verbatim}
+public abstract class Pessoa {
+	/* Tudo igual */
+}
+\end{verbatim}
+Tudo que foi escrito acima deste parágrafo continua a ser verdade, excepto
+\verb!new Pessoa(...)!, isto agora é inválido.
+
+Outra vantagem é que agora podemos definir métodos abstratos.
+\begin{verbatim}
+public abstract class Pessoa {
+	public abstract irParaAula(Aula a);
+}
+\end{verbatim}
+Agora todas as classes que estendem \verb!Pessoa! são obrigadas a implementar o
+método \verb!irParaAula!.
+
+Um método abstrato é declarado na classe abstrata e implementado nas
+subclasses da mesma. Isto é, na classe abstrata dizemos que todas as suas
+subclasses vão ter aquele comportamento (leia-se método) mas cada subclasse
+é que escolhe como o implementa.
+
+\textbf{Um método abstrato é obrigatório implementar.}
+
+Isto é útil quando faz sentido que todas a subclasses implementem um certo
+comportamento mas este depende de fatores que não conhecemos na superclasse,
+por exemplo.
+
+Em Java cada classe pode apenas estender uma superclasse. (C++, por exemplo,
+permite herança múltipla)"
+Interfaces "
+As interfaces servem para definir tipos de dados, para ``agrupar'' classes
+diferentes sob um tipo comum, com um comportamento comum.
+
+Interfaces podem ser vistas como contratos, ou seja, uma classe que
+implementa uma interface compromete-se a implementar os métodos descritos na
+interface.
+
+\subsection{Situação exemplo}
+Estamos a desenvolver uma API para reproduzir musica.
+\begin{verbatim}
+public class Radio {
+    private ArrayList<Musica> musicas;
+    public Radio(){
+        this.musicas = new ArrayList<>();
+    }
+
+    public void queue(Musica musica){
+        this.musicas.add(musica);
+    }
+
+    public void play(){
+        this.musicas.get(0).start();
+        this.musicas.remove(0);
+    }
+}
+\end{verbatim}
+Mas não queremos restringir aos utilizadores da nossa api (outros
+programadores) a uma classe \verb!Musica! definida por nós.
+
+\subsection{Solução}
+Podemos então definir uma interface, um contrato. E as condições deste
+contrato são muito simples:
+ \textit{``Se implementares estes metodos, eu posso reproduzir a tua musica''}
+
+Definimos a interface então da seguinte forma:
+\begin{verbatim}
+public interface Musica{
+    void start();
+}
+\end{verbatim}
+De notar que não coloquei um \textit{access modifier} (\verb!public!, \verb!private!, etc.).
+Isto é porque todos os métodos definidos numa interface são obrigatoriamente
+\verb!public!.
+
+Assim um programador que queria usar a nossa API pode definir a sua classe
+de musica e utilizar o radio que nós já definimos.
+\begin{verbatim}
+public class MyMusic implements Musica{
+    private byte[] song;
+
+    public MyMusic(byte[] song){
+        this.song = song;
+    }
+
+    public void start(){  // < Implementação do método que a interface obriga a implementar
+        System.audio(this.song);
+    }
+}
+\end{verbatim}
+
+E para utilizar a classe \verb!Radio! podemos usar a nossa musica.
+
+\begin{verbatim}
+public static void main(String[] args) {
+    Radio radio = new Radio();
+    MyMusic m = new MyMusic(new byte[]{1, 2, 1, 4});
+    radio.queue(m);
+}
+\end{verbatim}
+
+\subsection{Interfaces mais comuns}
+\subsubsection{Collections}
+Nas \verb!Collections! do Java temos várias interfaces que podemos utilizar.
+Alguns exemplos são:
+\begin{itemize}
+ \item List
+ \item Map
+\end{itemize}
+
+Podemos utilizar estas interfaces para fazer o nosso código mais genérico.
+\begin{verbatim}
+public class MyClass{
+    private List<String> nomes;
+
+    public MyClass(){
+        this.nomes = new ArrayList<>();
+    }
+
+    public MyClass(List<String> nomes){
+        this.nomes = nomes;
+    }
+}
+\end{verbatim}
+Esta classe aceita qualquer tipo de lista.
+
+E este sistema permite-nos também implementar as nossa próprias
+implementações de listas/maps/etc...
+
+\begin{verbatim}
+public class DBMap implements Map<String,Cena>{
+}
+\end{verbatim}
+
+\section{Interfaces Funcionais}
+
+Uma interface funcional é uma interface que apenas requer que um método seja
+implementado. por exemplo, a interface \verb!Musica! (que obriga a implementação do
+método \verb!void start()!), pode ser definida através de um lambda.
+
+E para utilizar a classe \verb!Radio! podemos fazer.
+
+\begin{verbatim}
+public static void main(String[] args) {
+    Radio radio = new Radio();
+    radio.queue(() -> System.audio(new byte[]{1, 2, 1, 4}));
+}
+\end{verbatim}
+
+Em vez de implementar uma classe.
+
+\section{Default Methods}
+Com o Java 8 foram introduzidos o métodos default. A ideia por traz destes é
+definir comportamento por defeito para as classes que implementam a nossa
+interface.
+
+\begin{verbatim}
+public interface Musica{
+    void start();
+    void stop();
+    default void play10Seconds(){
+        start();
+        TimeUnit.SECONDS.sleep(10);
+        stop();
+    }
+}
+\end{verbatim}
+
+Assim todas as classes que implementem esta interface tem também este
+método. Este pode ser \verb!Overriden! para alterar o seu comportamento."
+Introdução ao Paradigma "
+
+Um objecto é apenas a junção de dados e comportamento numa unidade lógica.
+
+Ou seja, se tivermos um carro poderíamos representá-lo da seguinte forma:
+
+\begin{verbatim}
+struct Car {
+    String brand;
+    String model;
+    int kmsTotal;
+    int kmsParcial;
+}
+\end{verbatim}
+
+Depois podemos querer definir que o carro pode ``andar'' e aumentar o número de
+kms que tem, ou reiniciar a quilometragem parcial. Para isto podemos definir
+funções como:
+
+\begin{verbatim}
+void andar(Car car, int km) {
+    car.kmsTotal += km;
+    car.kmsParcial += km;
+}
+
+void resetParcial(Car car) {
+    car.kmsParcial = 0;
+}
+
+
+// Example Main
+int main() {
+    Car car = /\textit{ inicialização }/
+    andar(car, 10);
+    resetParcial(car);
+}
+\end{verbatim}
+
+Este padrão de funções que recebem a estrutura para fazer alterações sobre o
+mesmo é muito comum. Este tipos de funções são o que chamamos de comportamento
+e no paradigma orientado a objectos são definidas juntas com a estrutura em si.
+Em Java usamos classes para criar esta relação e estas funções chamam-se \textbf{metodos}.
+
+Logo em Java definiríamos esta \verb!Class! da seguinte forma.
+
+\begin{verbatim}
+public class Car {
+    private String brand;
+    private String model;
+    private int kmsTotal;
+    private int kmsParcial;
+
+    public void andar(int km) {
+        this.kmsTotal += km;
+        this.kmsParcial += km;
+    }
+
+    public void resetParcial(int km) {
+        this.kmsParcial = 0;
+    }
+}
+
+// Example Main
+public class Main {
+    public static void main(String args[]){
+        Car car = new Car();
+        car.andar(10);
+        car.resetParcial();
+    }
+}
+\end{verbatim}
+
+Aqui podemos ver que a keyword \verb!this! substitui a referencia da estrutura que
+temos sempre de ter em programação imperativa."
+Iterators "
+Em Java iterar sobre uma coleção pode ser feito de muitas formas diferentes. Cabe-nos a nós encontrar a mais indicada
+ para o nosso problema.
+
+Relembro que ler a documentação começa a ser, cada vez mais, crucial para escrever bom código. A maior parte das operações
+ que são necessárias já estão definidas, não vale a pena \textit{``reinventar a roda''}.
+
+---
+
+Ao longo deste documento:
+\begin{itemize}
+ \item \verb!list! é um objeto do tipo \verb!List<ListElem>!
+ \item \verb!ListElem! é um elemento da lista.
+\end{itemize}
+
+`` O 'for' que todos conhecemos ''
+De certeza já viste/escreveste um \verb!for! assim.
+\begin{verbatim}
+for(int i=0; i<list.size(); i++){
+    ListElem l = list.get(i);
+    l.doStuff();
+}
+\end{verbatim}
+Este método funciona para a maior parte dos casos quando temos de iterar por um array (ArrayList), mas assume muito
+sobre o funcionamento da estrutura/classe."
+Foreach "
+Collections que implementem Iterable podem ser iteradas com este estilo de \verb!for!, chamado \verb!foreach!.
+
+\begin{verbatim}
+for(ListElem l: list){
+    l.doStuff();
+}
+\end{verbatim}
+Pode até ser lido, em liguagem natural, ``For each \verb!ListElem l! in list do this''
+
+Alternativamente, este código pode ser implementado da seguinte forma, recorrendo ao uso de um lambda
+ \textit{(mais sobre estes numa secção mais à frente)}:
+\begin{verbatim}
+list.foreach(l -> l.doStuff());
+\end{verbatim}
+
+Mas este \verb!for! tem, potencialmente, um problema: \textit{``Temos sempre de percorrer a lista toda,
+ visto que não temos a condição de paragem explicíta''}."
+Iteradores externos "
+Aqui entram os iteradores externos. Iterable, como já referi acima,
+ é uma interface, e esta garante que classes que a implementam têm o
+ método \verb!iterator()! que retorna um \verb!Iterator! sobre a collection.
+
+Como podemos ver pelos javaDocs \verb!Iterator! implementa 3 métodos muito simples.
+\begin{verbatim}
+boolean hasNext()
+\end{verbatim}
+Que retorna \verb!true! se o iterador não chegou ao fim da lista.
+\begin{verbatim}
+E next()
+\end{verbatim}
+Que retorna um elemento da lista onde o iterador se encontra e avança o iterador para o próximo elemento.
+\begin{verbatim}
+void remove()
+\end{verbatim}
+Que remove da lista o último elemento que o \verb!next()! retornou.
+
+Vamos então pôr isto em prática.
+\begin{verbatim}
+Iterator<ListElem> it = list.iterator();
+while(it.hasNext()){
+    ListElem l = it.next();
+    l.doStuff();
+    if(l.isSomething()){
+        it.remove();
+    }
+}
+\end{verbatim}
+
+Podemos então aqui alterar o código para que o ciclo acabe quando uma condição se verificar.
+\begin{verbatim}
+boolean flag = true;
+Iterator<ListElem> it = list.iterator();
+while(flag && it.hasNext()){
+    ListElem l = it.next();
+    l.doStuff();
+    if(l.isSomething()){
+        it.remove();
+    }
+    if(someCondition){
+        flag = false;
+    }
+}
+\end{verbatim}
+
+Como cada classe \verb!Iterable! implementa o seu próprio método \verb!iterator()! podemos ter a certeza que estamos a
+iterar de forma correcta sobre a \verb!Collecion! (O \verb!foreach! também garante isto)."
+Iteradores Internos "
+Os iteradoes internos tentam emular programação funcional para iterar sobre as \verb!Collections!.
+
+Estas implementam (desde o Java 8) o método stream que retorna um Stream
+ da \verb!Collection! e sobre este podemos fazer uma imensas operações.
+
+Importante notar que, como acontece em Programação Funcional, os streams apresentam Imutabilidade, ou seja,
+ equanto que nos iteradores teradoresExternos] podiamos remover elementos da \verb!Collection! enquanto
+ iteravamos sobre estes, com streams isto não é possivel. Podemos, no entanto, criar uma lista sem os elementos
+ que queremos remover e substituimos a lista antiga com a nova.
+
+\textit{(Nota: A lista é ``imutavel'' apenas no sentido em não é possivel alterar que elementos que a lista original tem, mas podemos alterar os objectos nela contidos e isto vai afetar a lista original, bem como todas as instacias do objecto em questão. Vou tentar explicar isto melhor com alguns exemplos mais a frente)}
+
+A estrutura usual de uma iteração usando \verb!stream! é a seguinte:
+\begin{verbatim}
+    list.stream()
+        .operacões_sobre_a_estrutura()
+        .converter_de_Stream_para_o_tipo_necessário();
+\end{verbatim}
+Não vale a pena listar todas as operações mas vou apresentar alguns exemplos.
+
+\subsection{Exemplo 1: map}
+Um caso muito frequente é querermos transformar uma lista de \verb!A!s numa lista de \verb!B!s.
+
+Assumindo que \verb!ListElem! implementa \verb!int getId()!, podemos converter uma lista de \verb!ListElem! numa lista de \verb!Integer!.
+\begin{verbatim}
+    List<Integer> ids = list.stream()
+   /\textit{1}/.map(l -> l.getId())
+   /\textit{2}/.collect(Collectors.toList);
+\end{verbatim}
+Analisando passo a passo:
+ 1. map transforma os elementos da lista de acordo com a função que lhe é passada. Em geral, esta função
+ será um lambda. Lambdas são relativamente simples, este \verb!l -> l.getId()!, por exemplo, quer dizer: ``para cada \verb!l!
+ chama e guarda o resultado de \verb!getId()! como elemento da lista'', no contexto do \verb!map!.
+ 2. collect \textit{coleciona} o resultado numa lista, visto que o resultado das nossas operações é um
+ \verb!Stream<Integer>! e nós precisamos de uma \verb!List<Integer>!. Para chamar o método \verb!collect()! temos de lhe passar
+  o Collector que este deve usar.
+
+Ficamos assim com uma lista com os Ids, esta nova lista independente da original.
+
+\subsection{Exemplo 2: filter}
+Outra das aplicações mais frequentes de streams é a filtragem de uma lista.
+
+Assumindo que \verb!ListElem! implementa \verb!int getValue()!, podemos então filtrar todos os elementos com valor inferior
+ a \verb!x!.
+
+\begin{verbatim}
+public List<ListElem> getAbove(int x){
+    return this.list.stream()
+        .filter(l -> l.getValue() > x)
+        .collect(Collectors.toList());
+}
+\end{verbatim}
+
+Este método irá então retornar uma lista dos \verb!ListElem! com valor superior a \verb!x! mas \textbf{atenção!}, pode, se \verb!ListElem! não for
+ imutavel, ter o defeito de não garantir o encapsulamento da classe que implementa este método.
+ Podemos, no entanto, resolver este problema facilmente, usando o \verb!map!.
+
+\begin{verbatim}
+public List<ListElem> getAbove(int x){
+    return this.list.stream()
+        .filter(l -> l.getValue() > x)
+        .map(l -> l.clone())
+        .collect(Collectors.toList());
+}
+\end{verbatim}
+
+\section{Method References}
+Quando o lambda que passamos a um destes métodos apenas chama outro método, como é o exemplo do \verb!l -> l.getId()! podemos
+ utilizar uma \verb!Method Reference! com a seguinte sintaxe: \verb!<Class>::<method>!
+
+Olhando para o Exemplo 1 novamente, o codigo sofreria a seguinte alteração.
+\begin{verbatim}
+    List<Integer> ids = list.stream()
+        .map(ListElem::getId)
+        .collect(Collectors.toList);
+\end{verbatim}
+
+\section{Lambda mais complexos}
+Por vezes o código que temos de implementar é muito complexo para ser escrito numa só linha. Nestes casos podemos, ``espandir''
+ o lambda para que seja mais legivel o que estámos a fazer.
+
+\begin{verbatim}
+public List<ListElem> getAbove(int x){
+    return this.list.stream()
+        .filter(l -> {
+                int i = l.getValue();
+                if(someCondition(i)){
+                    return true;
+                }else{
+                    if(someOtherCondition(i)){
+                        return false;
+                    }else{
+                        return true;
+                    }
+                }
+        })
+        .collect(Collectors.toList());
+}
+\end{verbatim}"
+Metodos e Variaveis de Classe "
+
+Tal como as instâncias de uma classe as classes em si podem ter variaveis e
+metodos, estes servem para definir dados e comportamento que seja igual para
+todas as instâncias independentemente do seu estado interno
+
+Para distinguir um variavel ou metodo de classe dos de instância usa-se a
+\textit{keyword} \verb!static!
+
+\begin{verbatim}
+public class MyClass{
+
+    private static String foo = ``Foo``; // Variavel de classe
+
+    public static String getFoo(){     // Metodo de classe
+        return foo;
+    }
+
+    private String bar;                // Variavel de instância
+
+    public MyClass(){                  // Construtor
+        this.bar = ``Bar``;
+    }
+
+    public String getBar(){            // Metodo de instância
+        return this.bar;
+    }
+}
+\end{verbatim}
+Pontos importantes a notar deste exemplo:
+
+1. As variaveis de classe tem de ser inicializadas quando são declaradas,
+para não conterem valores por defeito (\verb!null! no caso dos objectos). Visto
+não existe um ``constructor de classe''.
+2. As variaveis de classe não podem ser referenciadas com a \textit{keyword} \verb!this!
+visto que não pertencem a nenhuma instância. Aliás a referencia \verb!this! não
+pode ser usada dentro de um contexo \verb!static!, visto que não existe nenhuma
+instância para referênciar.
+
+\subsubsection{Exemplo de como chamar os metodos}
+\begin{verbatim}
+public static void main(String[] args){
+    MyClass mc = MyClass();
+    String bar = mc.getBar();
+    String foo = MyClass.getFoo();
+}
+\end{verbatim}
+Variaveis de classe podem ser vistos como variaveis globais do programa,
+são criadas quando o programa é iniciado e existem durante todo o tempo
+de vida do programa.
+
+\section{Exemplo do comportamento da variavel global}
+\begin{verbatim}
+public class MyClass{
+    private static int count = 0;
+
+    public static int getC(){
+        return count;
+    }
+
+    public MyClass(){
+        count++;
+    }
+}
+\end{verbatim}
+\begin{verbatim}
+public static void main(String[] args){
+    int a = -1;
+    a = MyClass.getC();        // a == 0
+    MyClass mc = new MyClass();
+    a = MyClass.getC();        // a == 1
+}
+\end{verbatim}
+Como podemos ver por este exemplo, como o constructor altera o valor da
+variavel \verb!static! esta modificação é visivel independente do contexto."
+
+Singleton Pattern (extra matéria) "
+Por vezes queremos garantir que existe apenas uma instância da nossa classe
+isto pode ser conseguido com metodos de classe.
+
+\begin{verbatim}
+public class Highlander{
+    private static Highlander instance = null;
+
+    private static Highlander get(){
+        if(instance == null) instance = new Highlander();
+        return instance;
+    }
+
+    private Highlander(){
+
+    }
+}
+\end{verbatim}
+O que isto implica é que não podem ser criadas instâncias novas porque o
+construtor é \verb!private! e para obter uma instância temos de usar o metodo
+\verb!static! \verb!get()!, que irá retornar sempre a mesma instância.
+
+\section{Interfaces}
+As interfaces também podem ter metodos static funcionando como qualquer
+qualquer outro metodo de classe.
+\begin{verbatim}
+public interface MyInterface{
+    public static foo(){
+        System.out.println(``Bar``);
+    }
+}
+\end{verbatim}
+\begin{verbatim}
+public class Main{
+    public static void main(String[] args){
+        MyInterface.foo();
+    }
+}
+\end{verbatim}"

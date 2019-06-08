@@ -1,0 +1,4 @@
+Palavra : Significado | NomeIngl | Synonimo ;
+Palavra : Redifinição | da | Palavra ;
+%%
+"Textos"

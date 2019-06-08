@@ -1,0 +1,3 @@
+Palavra : Significado | NomeIngl | Atributo a mais | Synonimo ;
+%%
+"Textos"
