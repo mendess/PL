@@ -74,7 +74,7 @@ impl Sati {
     }
 
     fn add_word(&mut self, word: String) -> Result<(), SatiError> {
-        if self.dictionary.contains_key(word.as_str()) {
+        if self.dictionary.contains_key(word.to_uppercase().as_str()) {
             Err(SatiError::WordAlreadyDefined)
         } else {
             let w = Word::new(word);
