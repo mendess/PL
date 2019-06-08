@@ -7,19 +7,16 @@ use std::os::raw::{c_char, c_int};
 const HEADER: &str = include_str!("../assets/header.tex");
 const FOOTER: &str = include_str!("../assets/footer.tex");
 
+#[derive(Default)]
 pub struct Sati {
     dictionary: HashMap<String, Word>,
     current_word: Option<String>,
     untitled_number: usize,
     output: Option<Box<dyn Write>>,
+    wrapped: bool,
 }
 
-impl Default for Sati {
-    fn default() -> Sati {
-        Sati::new()
-    }
-}
-
+#[derive(Debug)]
 struct Word {
     wd: String,
     meaning: Option<String>,
@@ -42,30 +39,32 @@ impl From<std::io::Error> for SatiError {
 }
 
 impl Sati {
-    fn new() -> Sati {
-        Sati {
-            dictionary: HashMap::new(),
-            current_word: None,
-            untitled_number: 0,
+    fn new(wrapped: bool) -> Result<Sati, SatiError> {
+        if wrapped {
+            writeln!(std::io::stdout(), "{}", HEADER).map_err(SatiError::from)?;
+        }
+        Ok(Self {
             output: Some(Box::new(stdout())),
-        }
+            wrapped,
+            ..Default::default()
+        })
     }
 
-    fn new_with_output(file: File) -> Sati {
-        Sati {
-            dictionary: HashMap::new(),
-            current_word: None,
-            untitled_number: 0,
+    fn new_with_output(mut file: File, wrapped: bool) -> Result<Sati, SatiError> {
+        if wrapped {
+            writeln!(file, "{}", HEADER).map_err(SatiError::from)?;
+        }
+        Ok(Self {
             output: Some(Box::new(file)),
-        }
+            wrapped,
+            ..Default::default()
+        })
     }
 
-    fn new_split() -> Sati {
-        Sati {
-            dictionary: HashMap::new(),
-            current_word: None,
-            untitled_number: 0,
-            output: None,
+    fn new_split(wrapped: bool) -> Sati {
+        Self {
+            wrapped,
+            ..Default::default()
         }
     }
 
@@ -135,14 +134,18 @@ impl Sati {
                     |t| format!("{}.tex", t),
                 );
                 let mut file = File::create(filename)?;
-                writeln!(file, "{}", HEADER)?;
+                if self.wrapped {
+                    writeln!(file, "{}", HEADER)?;
+                }
                 writeln!(
                     file,
                     "\\chapter{{{}}}\n{}",
                     title.unwrap_or_else(|| String::from("Untitled")),
                     text
                 )?;
-                writeln!(file, "{}", FOOTER)?;
+                if self.wrapped {
+                    writeln!(file, "{}", FOOTER)?;
+                }
                 Ok(())
             }
             Some(o) => {
@@ -265,36 +268,36 @@ impl<'a> Iterator for SplitPreserveWhitespace<'a> {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn sati_start_with_output(file: *const c_char) -> *mut Sati {
-    let mut file = match File::create(c_char_to_string(file)) {
+pub unsafe extern "C" fn sati_start(wrapped: bool) -> *mut Sati {
+    match Sati::new(wrapped) {
+        Ok(s) => Box::into_raw(Box::new(s)),
+        Err(_) => std::ptr::null_mut(),
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn sati_start_with_output(file: *const c_char, wrapped: bool) -> *mut Sati {
+    let file = match File::create(c_char_to_string(file).expect("Null Filename")) {
         Ok(f) => f,
         Err(_) => return std::ptr::null_mut(),
     };
-    match writeln!(file, "{}", HEADER).map_err(SatiError::from) {
-        Ok(_) => Box::into_raw(Box::new(Sati::new_with_output(file))),
+    match Sati::new_with_output(file, wrapped) {
+        Ok(s) => Box::into_raw(Box::new(s)),
         Err(_) => std::ptr::null_mut(),
     }
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn sati_start_split() -> *mut Sati {
-    Box::into_raw(Box::new(Sati::new_split()))
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn sati_start() -> *mut Sati {
-    match writeln!(std::io::stdout(), "{}", HEADER).map_err(SatiError::from) {
-        Ok(_) => Box::into_raw(Box::new(Sati::default())),
-        Err(_) => std::ptr::null_mut(),
-    }
+pub unsafe extern "C" fn sati_start_split(wrapped: bool) -> *mut Sati {
+    Box::into_raw(Box::new(Sati::new_split(wrapped)))
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn sati_end(sati: *mut Sati) -> c_int {
     let sati = Box::from_raw(sati);
-    match sati.output {
-        Some(mut o) => writeln!(o, "{}", FOOTER).map_err(SatiError::from),
-        None => Ok(()),
+    match (sati.output, sati.wrapped) {
+        (Some(mut o), true) => writeln!(o, "{}", FOOTER).map_err(SatiError::from),
+        _ => Ok(()),
     }
     .map(|_| 0)
     .unwrap_or_else(|_| SatiError::IOError as c_int)
@@ -304,7 +307,7 @@ pub unsafe extern "C" fn sati_end(sati: *mut Sati) -> c_int {
 pub unsafe extern "C" fn sati_add_word(sati: *mut Sati, word: *const c_char) -> c_int {
     let word = c_char_to_string(word);
     (&mut *sati)
-        .add_word(word)
+        .add_word(word.expect("Null word"))
         .map(|_| 0)
         .unwrap_or_else(|x| x as i32)
 }
@@ -313,7 +316,7 @@ pub unsafe extern "C" fn sati_add_word(sati: *mut Sati, word: *const c_char) -> 
 pub unsafe extern "C" fn sati_add_meaning(sati: *mut Sati, word: *const c_char) -> c_int {
     let word = c_char_to_string(word);
     (&mut *sati)
-        .add_meaning(word)
+        .add_meaning(word.expect("Null Meaning"))
         .map(|_| 0)
         .unwrap_or_else(|x| x as i32)
 }
@@ -322,7 +325,7 @@ pub unsafe extern "C" fn sati_add_meaning(sati: *mut Sati, word: *const c_char) 
 pub unsafe extern "C" fn sati_add_english_name(sati: *mut Sati, word: *const c_char) -> c_int {
     let word = c_char_to_string(word);
     (&mut *sati)
-        .add_english_name(word)
+        .add_english_name(word.expect("Null English Name"))
         .map(|_| 0)
         .unwrap_or_else(|x| x as i32)
 }
@@ -331,7 +334,7 @@ pub unsafe extern "C" fn sati_add_english_name(sati: *mut Sati, word: *const c_c
 pub unsafe extern "C" fn sati_add_synonym(sati: *mut Sati, word: *const c_char) -> c_int {
     let word = c_char_to_string(word);
     (&mut *sati)
-        .add_synonym(word)
+        .add_synonym(word.expect("Null synonym"))
         .map(|_| 0)
         .unwrap_or_else(|x| x as i32)
 }
@@ -343,12 +346,12 @@ pub unsafe extern "C" fn sati_annotate(
     text: *const c_char,
 ) -> c_int {
     let title = match c_char_to_string(title) {
-        ref x if x.is_empty() => None,
-        s => Some(s),
+        Some(ref x) if x.is_empty() => None,
+        s => s,
     };
     let text = c_char_to_string(text);
     (&mut *sati)
-        .annotate(title, text)
+        .annotate(title, text.expect("Expected a text to annotate"))
         .map(|_| 0)
         .unwrap_or_else(|x| x as i32)
 }
@@ -358,6 +361,10 @@ pub unsafe extern "C" fn sati_dump(sati: *mut Sati) {
     (&*sati).dump()
 }
 
-fn c_char_to_string(w: *const c_char) -> String {
-    unsafe { CStr::from_ptr(w).to_string_lossy().into_owned() }
+fn c_char_to_string(w: *const c_char) -> Option<String> {
+    if !w.is_null() {
+        Some(unsafe { CStr::from_ptr(w).to_string_lossy().into_owned() })
+    } else {
+        None
+    }
 }
