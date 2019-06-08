@@ -37,19 +37,19 @@ void test_errors(SATI_ERROR e, const char* word)
         exit(1);
     case WORD_ALREADY_DEFINED: {
         char msg[1024];
-        snprintf(msg, 1024, "'%s' already defined", word);
+        snprintf(msg, 1024, "'%s' already defined.", word);
         yyerror(msg);
         exit(1);
     }
     case MEANING_ALREADY_DEFINED:
-        yyerror("Meaning already added");
+        yyerror("Meaning already added.");
         exit(1);
     case ENGLISH_NAME_ALREADY_DEFINED:
-        yyerror("English name already addded");
+        yyerror("English name already addded.");
         exit(1);
     case IO_ERROR: {
         char msg[1024];
-        snprintf(msg, 1024, "Couldn't open '%s' for writing", word);
+        snprintf(msg, 1024, "Couldn't open '%s'.", word);
         yyerror(msg);
         exit(1);
     }
