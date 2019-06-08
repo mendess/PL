@@ -53,7 +53,7 @@ First we'll analyse the problem, see what needs to be implemented and what
 challenges need to be overcome to implement said features. Then there will be
 an overview of the technologies used and finally the implementation done. The 2
 main tools that were be used for this job were \textit{yacc} and \textit{flex}
-that are in it of them selves \textit{Domain Specific Languages}.
+which operate on \textit{Domain Specific Languages} them selves.
 
 \chapter{Problem}
 
@@ -69,8 +69,9 @@ defined where the dictionary can be stored as well as texts to annotate. It's
 also important that the language is user friendly as it is intended to be
 human readable and writeable.
 
-Another problem that needs to be taken into account is UTF-8 encoding.
-%TODO: GET BETTER SHIT WRITTEN HERE
+Another problem that needs to be taken into account is UTF-8 encoding. Finding
+words in a text means separating words by spaces but also take into account
+punctuation and other non-alphanumeric characters.
 
 \chapter{Solution}\label{cha:solution}
 
@@ -82,6 +83,8 @@ between dictionary (\textit{Dicl}) and texts (\textit{Texts}), separated by one 
 
 \begin{grammar}
     <sati> $\to$ <dicl> '\%' <texts>
+    \alt '\%' <texts>
+    \alt <dicl> '\%'
 \end{grammar}
 
 \subsection{Dictionary}
@@ -90,7 +93,7 @@ The dictionary is a collection of words and each word is composed of 4 parts.
 
 \begin{grammar}
     <dicl> $\to$ <word>
-    \alt <dicl> <word>
+    \alt <word> <dicl>
 \end{grammar}
 
 The word to find in the dictionary \textit{WD}, it's meaning \textit{Meaning}
@@ -105,8 +108,8 @@ on the list may or may not be followed by a comma.
     \alt <meaning> `|' <englishName> `|' <synonym> `;'
 
     <synonyms> $\to$ <synonym> `,'
-    \alt <synonyms> <synonym> `,'
-    \alt <synonyms> <synonym>
+    \alt <synonym>
+    \alt <synonym> `,' <synonyms>
 
     <wd> $\to$ <ID>
 
@@ -272,11 +275,12 @@ either ``\textit{Untitled X}'' (where \textit{X} is the
 
 To find the words that needed to be annotated the text was split on spaces,
 this came with another problem, sometimes words are followed by punctuation
-instead of spaces and thus the `Map' can't find it. For example, ``word.'' is
-not in the dictionary but ``word'' is, to solve this I made use of
-\textit{Rust}'s String library, which allows for, amongst other things, trim
-the start and end of a string of non alphanumeric characters in a UTF-8 aware
-way\footnote{\href{https://doc.rust-lang.org/std/primitive.str.html\#method.trim_start_matches}{Rust Docs}}.
+instead of spaces and thus the `dictionary' can't find it. For example,
+``word!'' is not in the dictionary but ``word'' is, to solve this I made use of
+\textit{Rust}'s String library, which allows, amongst other things, the
+trimming the start and end of a string of non alphanumeric characters in a
+UTF-8 aware
+way\footnote{\href{https://doc.rust-lang.org/std/primitive.str.html\#method.trim_matches}{Rust Docs}}.
 
 And finally, the texts are flushed to the file after being parsed, as to not
 allocate unnecessary memory.
@@ -293,10 +297,16 @@ to control the input and output of the program.
         specified as parameter.
     \item \texttt{--s | ----split}: Outputs each text in a separate file, with
         the same name as the chapter title.
-    \item \texttt{--n | ----no--header}: So the output does not contain any
-        \LaTeX{} headers.
+    \item \texttt{--n | ----no--header}: Suppresses the output of the \LaTeX{}
+        headers needed for a compiling document.
     \item \texttt{--h | ----help}: Shows the commands usage.
 \end{itemize}
+
+A concise manual page was also written to help document the program, it can be seen
+through the \texttt{man sati} command after installing the program. Which is
+also handled by the makefile written (\texttt{make install}). Because this
+project requires the \texttt{Rust} compiler to build a platform method of
+installation was also provided in the makefile (\texttt{make rust}).
 
 \chapter{Conclusion}
 

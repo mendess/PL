@@ -8,10 +8,12 @@
 %type <str> Wd Synonym Meaning EnglishName Dicl Word Synonyms Text Title
 %%
 Sati : Dicl '%' Texts
+     | '%' Texts
+     | Dicl '%'
      ;
 
 Dicl : Word
-     | Dicl Word
+     | Word Dicl
      ;
 
 Word : Wd ':' Meaning '|' EnglishName '|' '[' Synonyms ']' ';'
@@ -19,8 +21,8 @@ Word : Wd ':' Meaning '|' EnglishName '|' '[' Synonyms ']' ';'
      ;
 
 Synonyms : Synonym ','
-         | Synonyms Synonym ','
-         | Synonyms Synonym
+         | Synonym
+         | Synonym ',' Synonyms
          ;
 
 Wd : ID                              { add_word($1); }
