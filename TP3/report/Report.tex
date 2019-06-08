@@ -129,7 +129,7 @@ Encapsulamento : Um mecanismo da linguagem para
                | Encapsulation | Modularidade
                ;
 
-Imutabilidade : Uma propriedade de informação que
+               Imutabilidade : Uma propriedade de informação que
                 implica que esta não pode ser alterada.
               | Imutability
               | [ Constante, Inalteravel, ]
@@ -182,14 +182,14 @@ Encapsulamento : Um mecanismo da linguagem para
                | Modularidade
                ;
 
-Imutabilidade : Uma propriedade de informação que
+               Imutabilidade : Uma propriedade de informação que
                 implica que esta não pode ser alterada.
               | Imutability
               | [ Constante, Inalteravel, ]
               ;
-%%
-POO "O encapsulamento permite uma maior modularidade e organização do código."
-"Em programação é muito importante o single responsability principle."
+              %%
+              POO "O encapsulamento permite uma maior modularidade e organização do código."
+              "Em programação é muito importante o single responsability principle."
 \end{verbatim}
 
 \subsection{Lexing}
@@ -285,7 +285,9 @@ way\footnote{\href{https://doc.rust-lang.org/std/primitive.str.html\#method.trim
 And finally, the texts are flushed to the file after being parsed, as to not
 allocate unnecessary memory.
 
-\chapter{Usability/Flags}\label{cha:flags}
+\chapter{Usability}\label{cha:flags}
+
+\section{Flags}
 
 The program has a few flags documented in it's man page. These allow the user
 to control the input and output of the program.
@@ -307,6 +309,26 @@ through the \texttt{man sati} command after installing the program. Which is
 also handled by the makefile written (\texttt{make install}). Because this
 project requires the \texttt{Rust} compiler to build a platform method of
 installation was also provided in the makefile (\texttt{make rust}).
+
+\section{Errors}
+
+The library currently reports all error messages with the line in which they
+occurred, and aborts execution once any error is found.
+
+Currently the errors that can be reported on are:
+
+\begin{itemize}
+    \item Input/Output errors, when a write or read fails or when a file can't
+        be opened.
+    \item Syntax errors detected by the grammar.
+    \item Redefinition of a word in the dictionary.
+    \item Adding a second meaning to a word.
+    \item Adding a second description to a word.
+\end{itemize}
+
+The last two errors never happen due to the nature of the language, they will
+be syntax errors before being logic errors, but the library code developed is
+still prepared to deal with these.
 
 \chapter{Conclusion}
 
