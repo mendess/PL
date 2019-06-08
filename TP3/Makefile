@@ -55,6 +55,9 @@ uninstall:
 	sudo rm $(DESTDIR)/usr/share/local/man/man1/sati.1
 	sudo mandb
 
+rust:
+	curl https://sh.rustup.rs -sSf | sh
+
 __lex: $(SOURCES_DIR)/sati.l
 	@mkdir -p $(T_GIC)
 	flex -o $(LEX_OUT) $<
